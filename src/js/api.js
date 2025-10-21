@@ -105,7 +105,7 @@ const API = {
     // Adaptar respuesta de la API al formato esperado por la app
     return {
       expected_qty: result.recipe.quantity,
-      product_uom: 'kg', // TODO: obtener de la receta
+      product_uom: result.recipe.product_uom || 'kg',
       ingredients: result.materials.map(m => ({
         product_id: m.product_id,
         product_name: m.product_name,
