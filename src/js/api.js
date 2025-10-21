@@ -35,7 +35,7 @@ const API = {
 
     const token = this.getToken();
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers['X-Auth-Token'] = token;
     }
 
     const options = {
@@ -51,11 +51,11 @@ const API = {
       const response = await fetch(url, options);
       const result = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || !result.success) {
         throw new Error(result.error || 'Error en la petición');
       }
 
-      return result;
+      return result.data;
     } catch (error) {
       console.error('API Error:', error);
       throw error;
@@ -63,12 +63,11 @@ const API = {
   },
 
   /**
-   * Login de usuario
+   * Login de usuario con código de barras
    */
-  async login(username, pin) {
+  async login(code) {
     const result = await this.request(CONFIG.API.LOGIN, 'POST', {
-      username,
-      pin,
+      code: code,
     });
 
     if (result.token) {
@@ -98,21 +97,48 @@ const API = {
    * Calcula explosión de materiales para una receta
    */
   async calculateRecipe(recipeId, quantity) {
-    return await this.request(CONFIG.API.CALCULATE, 'POST', {
+    const result = await this.request(CONFIG.API.CALCULATE, 'POST', {
       recipe_id: recipeId,
       quantity: parseFloat(quantity),
     });
+
+    // Adaptar respuesta de la API al formato esperado por la app
+    return {
+      expected_qty: result.recipe.quantity,
+      product_uom: 'kg', // TODO: obtener de la receta
+      ingredients: result.materials.map(m => ({
+        product_id: m.product_id,
+        product_name: m.product_name,
+        qty: m.quantity,
+        uom_name: m.uom,
+      })),
+      phases: result.phases,
+    };
   },
 
   /**
    * Inicia una producción
    */
-  async startProduction(recipeId, quantity, ingredients) {
-    return await this.request(CONFIG.API.START, 'POST', {
+  async startProduction(recipeId, quantity, producerId = null) {
+    const result = await this.request(CONFIG.API.START, 'POST', {
       recipe_id: recipeId,
-      main_ingredient_qty: parseFloat(quantity),
-      ingredients_json: JSON.stringify(ingredients),
+      quantity: parseFloat(quantity),
+      producer_id: producerId,
     });
+
+    // Adaptar respuesta al formato esperado
+    return {
+      production: {
+        id: result.production_id,
+        code: result.name,
+        recipe_name: result.product,
+        expected_qty: result.quantity,
+        product_uom: 'kg',
+        state: result.state,
+        phases: [], // Las fases se cargarían después
+        current_phase: null,
+      }
+    };
   },
 
   /**

@@ -31,7 +31,7 @@ const App = {
   registerEventListeners() {
     // Login
     document.getElementById('btn-login').addEventListener('click', () => this.handleLogin());
-    document.getElementById('login-pin').addEventListener('keypress', (e) => {
+    document.getElementById('login-code').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') this.handleLogin();
     });
 
@@ -69,22 +69,21 @@ const App = {
    * Maneja el login
    */
   async handleLogin() {
-    const username = document.getElementById('login-username').value.trim();
-    const pin = document.getElementById('login-pin').value.trim();
+    const code = document.getElementById('login-code').value.trim();
 
-    if (!username || !pin) {
-      UI.showError('login-error', 'Por favor ingrese usuario y PIN');
+    if (!code) {
+      UI.showError('login-error', 'Por favor ingrese su código');
       return;
     }
 
     try {
       UI.hideError('login-error');
-      const result = await API.login(username, pin);
+      const result = await API.login(code);
 
       State.setUser(result.user);
       await this.loadCalculateScreen();
     } catch (error) {
-      UI.showError('login-error', error.message || 'Error al iniciar sesión');
+      UI.showError('login-error', error.message || 'Código inválido');
     }
   },
 

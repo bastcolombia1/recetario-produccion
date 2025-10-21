@@ -4,7 +4,7 @@
 
 const CONFIG = {
   // URL base de Odoo (cambiar según el entorno)
-  ODOO_URL: 'http://192.168.0.1:8071', // Cambiar por la IP/dominio real
+  ODOO_URL: 'http://192.168.0.1:8071', // Cambiar por la IP real de devhost1
 
   // Endpoints API
   API: {
