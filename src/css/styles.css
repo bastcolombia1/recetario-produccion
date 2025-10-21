@@ -1,0 +1,561 @@
+/* ======================== RESET Y CONFIGURACIÓN BASE ======================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --color-primary: #007bff;
+  --color-success: #28a745;
+  --color-warning: #ffc107;
+  --color-danger: #dc3545;
+  --color-info: #17a2b8;
+  --color-dark: #343a40;
+  --color-light: #f8f9fa;
+  --color-white: #ffffff;
+  --color-border: #dee2e6;
+  --color-text: #212529;
+  --color-text-light: #6c757d;
+  --color-areperia: #f7d437;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: var(--color-light);
+  color: var(--color-text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ======================== PANTALLAS ======================== */
+.screen {
+  display: none;
+  min-height: 100vh;
+  padding: 20px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.screen.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ======================== HEADER ======================== */
+.header {
+  background: var(--color-areperia);
+  color: var(--color-dark);
+  padding: 15px 20px;
+  margin: -20px -20px 20px -20px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.header h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.production-code {
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+  font-weight: 500;
+}
+
+.user-badge {
+  background: var(--color-white);
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+/* ======================== CONTAINERS ======================== */
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.container.center {
+  text-align: center;
+}
+
+/* ======================== LOGIN ======================== */
+.login-container {
+  max-width: 400px;
+  margin: 80px auto;
+  background: var(--color-white);
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: var(--shadow-lg);
+}
+
+.logo {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.logo h1 {
+  font-size: 2.5rem;
+  color: var(--color-dark);
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  color: var(--color-text-light);
+  font-size: 1rem;
+}
+
+/* ======================== FORM ELEMENTS ======================== */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--color-dark);
+  font-size: 1rem;
+}
+
+.input-field {
+  width: 100%;
+  padding: 15px;
+  font-size: 1.1rem;
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-white);
+  color: var(--color-text);
+  transition: border-color 0.3s ease;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.input-field::placeholder {
+  color: #adb5bd;
+}
+
+.input-large {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-success);
+}
+
+.input-with-unit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.input-with-unit .input-field {
+  flex: 1;
+}
+
+.unit-label {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-text-light);
+  min-width: 50px;
+}
+
+textarea.input-field {
+  resize: vertical;
+  font-family: inherit;
+  min-height: 80px;
+}
+
+/* ======================== BUTTONS ======================== */
+.btn {
+  display: inline-block;
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: var(--shadow);
+}
+
+.btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-large {
+  padding: 20px 24px;
+  font-size: 1.2rem;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.btn-primary:hover {
+  background: #0056b3;
+}
+
+.btn-success {
+  background: var(--color-success);
+  color: var(--color-white);
+}
+
+.btn-success:hover {
+  background: #218838;
+}
+
+.btn-warning {
+  background: var(--color-warning);
+  color: var(--color-dark);
+}
+
+.btn-warning:hover {
+  background: #e0a800;
+}
+
+.btn-danger {
+  background: var(--color-danger);
+  color: var(--color-white);
+}
+
+.btn-danger:hover {
+  background: #c82333;
+}
+
+.btn-secondary {
+  background: var(--color-border);
+  color: var(--color-text);
+  margin-top: 10px;
+}
+
+.btn-secondary:hover {
+  background: #c8cfd6;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 10px;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+.button-group {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+/* ======================== INFO BOXES ======================== */
+.info-box {
+  background: #e7f3ff;
+  border-left: 4px solid var(--color-info);
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.info-box strong {
+  color: var(--color-dark);
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row .label {
+  font-weight: 600;
+  color: var(--color-text-light);
+}
+
+.info-row .value {
+  font-weight: 700;
+  color: var(--color-dark);
+}
+
+.result-box {
+  background: #d4edda;
+  border-left: 4px solid var(--color-success);
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 1.1rem;
+}
+
+.highlight {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-success);
+  margin-left: 10px;
+}
+
+/* ======================== INGREDIENTS LIST ======================== */
+.ingredients-list {
+  background: var(--color-white);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+
+.ingredient-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 1rem;
+}
+
+.ingredient-item:last-child {
+  border-bottom: none;
+}
+
+.ingredient-name {
+  font-weight: 600;
+  color: var(--color-dark);
+  flex: 2;
+}
+
+.ingredient-qty {
+  font-weight: 700;
+  color: var(--color-primary);
+  text-align: right;
+  flex: 1;
+}
+
+/* ======================== PHASES ======================== */
+.phase-current {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.phase-current label {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.phase-name {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.phases-list {
+  background: var(--color-white);
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: var(--shadow);
+}
+
+.phase-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background 0.3s ease;
+}
+
+.phase-item.completed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.phase-item.in-progress {
+  background: #cfe2ff;
+  color: #084298;
+}
+
+.phase-item.pending {
+  background: #f8f9fa;
+  color: #6c757d;
+}
+
+.phase-icon {
+  font-size: 1.5rem;
+  margin-right: 12px;
+}
+
+/* ======================== TIME & PROGRESS ======================== */
+.time-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.time-item {
+  background: var(--color-white);
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.time-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+  margin-bottom: 5px;
+}
+
+.time-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.progress-container {
+  margin: 20px 0;
+}
+
+.progress-container label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 30px;
+  background: #e9ecef;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-success), #5cb85c);
+  border-radius: 15px;
+  transition: width 0.5s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+}
+
+.progress-text {
+  display: block;
+  text-align: center;
+  margin-top: 5px;
+  font-weight: 700;
+  color: var(--color-success);
+  font-size: 1.1rem;
+}
+
+/* ======================== SUCCESS SCREEN ======================== */
+.success-icon {
+  font-size: 5rem;
+  margin: 40px 0 20px 0;
+}
+
+.success-message {
+  font-size: 1.1rem;
+  color: var(--color-text-light);
+  margin-bottom: 30px;
+}
+
+/* ======================== UTILITIES ======================== */
+.divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 25px 0;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.error-message {
+  background: #f8d7da;
+  border-left: 4px solid var(--color-danger);
+  color: #721c24;
+  padding: 15px;
+  border-radius: 6px;
+  margin-top: 15px;
+  font-weight: 600;
+}
+
+/* ======================== RESPONSIVE ======================== */
+@media (max-width: 480px) {
+  .screen {
+    padding: 15px;
+  }
+
+  .login-container {
+    margin: 40px auto;
+    padding: 30px 20px;
+  }
+
+  .logo h1 {
+    font-size: 2rem;
+  }
+
+  .header h2 {
+    font-size: 1.2rem;
+  }
+
+  .phase-name {
+    font-size: 1.5rem;
+  }
+
+  .time-info {
+    grid-template-columns: 1fr;
+  }
+
+  .button-group {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ======================== TOUCH FEEDBACK ======================== */
+@media (hover: none) {
+  .btn:active {
+    transform: scale(0.98);
+  }
+}
