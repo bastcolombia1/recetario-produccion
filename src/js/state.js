@@ -21,6 +21,12 @@ const State = {
   // Temporizador de actualización
   updateTimer: null,
 
+  // Temporizador de auto-retorno (1 minuto)
+  autoReturnTimer: null,
+
+  // Temporizador de auto-refresh (1 minuto)
+  autoRefreshTimer: null,
+
   /**
    * Inicializa el estado desde localStorage
    */
@@ -215,6 +221,42 @@ const State = {
   },
 
   /**
+   * Inicia el temporizador de auto-retorno (1 minuto)
+   */
+  startAutoReturnTimer(callback) {
+    this.stopAutoReturnTimer();
+    this.autoReturnTimer = setTimeout(callback, 60000); // 1 minuto
+  },
+
+  /**
+   * Detiene el temporizador de auto-retorno
+   */
+  stopAutoReturnTimer() {
+    if (this.autoReturnTimer) {
+      clearTimeout(this.autoReturnTimer);
+      this.autoReturnTimer = null;
+    }
+  },
+
+  /**
+   * Inicia el temporizador de auto-refresh (1 minuto)
+   */
+  startAutoRefreshTimer(callback) {
+    this.stopAutoRefreshTimer();
+    this.autoRefreshTimer = setInterval(callback, 60000); // 1 minuto
+  },
+
+  /**
+   * Detiene el temporizador de auto-refresh
+   */
+  stopAutoRefreshTimer() {
+    if (this.autoRefreshTimer) {
+      clearInterval(this.autoRefreshTimer);
+      this.autoRefreshTimer = null;
+    }
+  },
+
+  /**
    * Limpia todo el estado
    */
   reset() {
@@ -223,5 +265,7 @@ const State = {
     this.currentRecipe = null;
     this.currentCalculation = null;
     this.stopUpdateTimer();
+    this.stopAutoReturnTimer();
+    this.stopAutoRefreshTimer();
   },
 };

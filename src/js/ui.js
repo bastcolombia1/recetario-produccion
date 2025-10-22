@@ -312,16 +312,43 @@ const UI = {
       const currentPhase = production.current_phase || { name: 'Iniciando...' };
       const phaseIcon = CONFIG.PHASE_ICONS[currentPhase.name] || '📋';
 
+      // Verificar si la fase está vencida (tiempo transcurrido > tiempo estimado)
+      const estimatedMinutes = currentPhase.estimated_minutes || 0;
+      const isOverdue = elapsed > estimatedMinutes && estimatedMinutes > 0;
+
+      // Agregar clase de alerta si está vencida
+      if (isOverdue) {
+        card.classList.add('overdue-alert');
+      }
+
       card.innerHTML = `
         <div class="production-card-header">
           <div class="production-card-title">${production.recipe_name || 'Producción'}</div>
           <div class="production-card-code">${production.code || 'N/A'}</div>
         </div>
         <div class="production-card-phase">${phaseIcon} ${currentPhase.name}</div>
-        <div class="production-card-time">⏱️ Tiempo: ${timeText}</div>
+        <div class="production-card-time">⏱️ Tiempo: ${timeText}${isOverdue ? ' ⚠️' : ''}</div>
+        ${isOverdue ? '<button class="btn-advance-phase-card" data-index="' + index + '">▶️ Avanzar Fase</button>' : ''}
       `;
 
-      card.addEventListener('click', () => {
+      card.addEventListener('click', (e) => {
+        // Si se clickeó el botón de avanzar fase, no seleccionar la producción
+        if (e.target.classList.contains('btn-advance-phase-card')) {
+          e.stopPropagation();
+          const idx = parseInt(e.target.dataset.index);
+          if (window.App && window.App.selectProduction) {
+            window.App.selectProduction(idx);
+            // Pequeño delay para que se seleccione primero
+            setTimeout(() => {
+              if (window.App && window.App.handleNextPhase) {
+                window.App.handleNextPhase();
+              }
+            }, 100);
+          }
+          return;
+        }
+
+        // Click normal en la tarjeta
         if (window.App && window.App.selectProduction) {
           window.App.selectProduction(index);
         }

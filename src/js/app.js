@@ -112,6 +112,9 @@ const App = {
    */
   async loadCalculateScreen() {
     try {
+      // Detener timer de auto-retorno si está activo
+      State.stopAutoReturnTimer();
+
       // Cargar recetas
       const recipes = await API.getRecipes();
       UI.loadRecipes(recipes);
@@ -129,6 +132,12 @@ const App = {
       UI.updateActiveProductionsList();
 
       UI.showScreen('screen-calculate');
+
+      // Iniciar timer de auto-refresh (1 minuto)
+      State.startAutoRefreshTimer(() => {
+        console.log('Auto-refresh de producciones activas');
+        UI.updateActiveProductionsList();
+      });
     } catch (error) {
       console.error('Error al cargar pantalla de cálculo:', error);
       UI.showError('calculate-error', 'Error al cargar datos');
@@ -151,6 +160,12 @@ const App = {
   showProductionScreen(production) {
     UI.updateProductionScreen(production);
     UI.showScreen('screen-production');
+
+    // Iniciar timer de auto-retorno (1 minuto)
+    State.startAutoReturnTimer(() => {
+      console.log('Auto-retorno a pantalla principal');
+      this.loadCalculateScreen();
+    });
   },
 
   /**
@@ -201,6 +216,11 @@ const App = {
    * Maneja el inicio de producción
    */
   async handleStartProduction() {
+    if (!State.currentRecipe) {
+      UI.showError('calculate-error', 'Debe seleccionar una receta primero');
+      return;
+    }
+
     if (!State.currentCalculation) {
       UI.showError('calculate-error', 'Primero debe calcular la producción');
       return;

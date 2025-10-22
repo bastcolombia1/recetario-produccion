@@ -619,6 +619,53 @@ textarea.input-field {
   color: var(--color-text-light);
 }
 
+/* Alerta de fase vencida */
+.production-card.overdue-alert {
+  background: #FFC107;
+  border-left-color: var(--color-warning);
+  animation: blink-card-warning 1.5s ease-in-out infinite;
+}
+
+@keyframes blink-card-warning {
+  0%, 100% {
+    background-color: #FFC107;
+    opacity: 1;
+  }
+  50% {
+    background-color: #FFE082;
+    opacity: 0.85;
+  }
+}
+
+.btn-advance-phase-card {
+  display: block;
+  width: 90%;
+  max-width: 280px;
+  margin: 15px auto 5px auto;
+  padding: 16px 20px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.btn-advance-phase-card:hover {
+  background: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 123, 255, 0.4);
+}
+
+.btn-advance-phase-card:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
 #active-productions-section h3 {
   color: var(--color-dark);
   font-size: 1.2rem;
