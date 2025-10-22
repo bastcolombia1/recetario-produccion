@@ -6,9 +6,10 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Recetario - La Arepería</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=20251022">
 </head>
 <body>
+<!-- VERSIÓN: 2025-10-22O - Manejo de error "No hay fase actual" -->
 
   <!-- ======================== PANTALLA 1: LOGIN ======================== -->
   <div id="screen-login" class="screen active">
@@ -37,6 +38,18 @@
     </div>
 
     <div class="container">
+      <!-- Botón de historial -->
+      <div style="text-align: right; margin-bottom: 15px;">
+        <button id="btn-view-history-main" class="btn btn-secondary" style="font-size: 0.9rem;">📋 Historial</button>
+      </div>
+
+      <!-- Lista de producciones activas -->
+      <div id="active-productions-section" class="hidden">
+        <h3>Producciones en Progreso</h3>
+        <div id="active-productions-list" class="productions-list"></div>
+        <div class="divider"></div>
+      </div>
+
       <h2>Nueva Producción</h2>
 
       <div class="form-group">
@@ -82,6 +95,7 @@
   <!-- ======================== PANTALLA 3: PRODUCCIÓN EN PROGRESO ======================== -->
   <div id="screen-production" class="screen">
     <div class="header">
+      <button id="btn-back-to-list" class="btn-link">← Volver</button>
       <h2 id="production-recipe-name">CARNE DESMECHADA</h2>
       <p id="production-code" class="production-code"></p>
     </div>
@@ -183,7 +197,7 @@
 
       <button id="btn-finish-production" class="btn btn-success btn-large">✅ FINALIZAR Y GUARDAR</button>
 
-      <button id="btn-back-to-production" class="btn btn-secondary">← VOLVER</button>
+      <button id="btn-back-to-production" class="btn btn-secondary">← VOLVER A LISTA</button>
 
       <div id="finalize-error" class="error-message hidden"></div>
     </div>
@@ -212,11 +226,26 @@
     </div>
   </div>
 
+  <!-- ======================== PANTALLA 6: HISTORIAL ======================== -->
+  <div id="screen-history" class="screen">
+    <div class="header">
+      <button id="btn-back-from-history" class="btn-link">← Volver</button>
+      <h2>📋 HISTORIAL DE PRODUCCIONES</h2>
+    </div>
+
+    <div class="container">
+      <div id="history-loading" class="loading-message">Cargando historial...</div>
+      <div id="history-list" class="history-list"></div>
+      <div id="history-empty" class="empty-message hidden">No hay producciones en el historial</div>
+      <div id="history-error" class="error-message hidden"></div>
+    </div>
+  </div>
+
   <!-- Scripts -->
-  <script src="js/config.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/state.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/config.js?v=20251022O"></script>
+  <script src="js/api.js?v=20251022O"></script>
+  <script src="js/state.js?v=20251022O"></script>
+  <script src="js/ui.js?v=20251022O"></script>
+  <script src="js/app.js?v=20251022O"></script>
 </body>
 </html>

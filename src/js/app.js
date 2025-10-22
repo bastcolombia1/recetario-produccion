@@ -38,6 +38,9 @@ const App = {
     // Logout
     document.getElementById('btn-logout').addEventListener('click', () => this.handleLogout());
 
+    // Historial desde pantalla principal
+    document.getElementById('btn-view-history-main').addEventListener('click', () => this.loadHistoryScreen());
+
     // Calcular
     document.getElementById('recipe-select').addEventListener('change', (e) => this.handleRecipeChange(e));
     document.getElementById('btn-calculate').addEventListener('click', () => this.handleCalculate());
@@ -46,6 +49,7 @@ const App = {
     document.getElementById('btn-start-production').addEventListener('click', () => this.handleStartProduction());
 
     // Control de producción
+    document.getElementById('btn-back-to-list').addEventListener('click', () => this.loadCalculateScreen());
     document.getElementById('btn-pause').addEventListener('click', () => this.handlePause());
     document.getElementById('btn-resume').addEventListener('click', () => this.handleResume());
     document.getElementById('btn-next-phase').addEventListener('click', () => this.handleNextPhase());
@@ -55,14 +59,16 @@ const App = {
     document.getElementById('actual-qty-input').addEventListener('input', () => UI.updateYield());
     document.getElementById('btn-finish-production').addEventListener('click', () => this.handleFinishProduction());
     document.getElementById('btn-back-to-production').addEventListener('click', () => {
-      UI.showScreen('screen-production');
+      // Volver a la lista de producciones en lugar de a la pantalla de producción
+      this.loadCalculateScreen();
     });
 
     // Éxito
     document.getElementById('btn-new-production').addEventListener('click', () => this.handleNewProduction());
-    document.getElementById('btn-view-history').addEventListener('click', () => {
-      alert('Funcionalidad de historial próximamente');
-    });
+    document.getElementById('btn-view-history').addEventListener('click', () => this.loadHistoryScreen());
+
+    // Historial
+    document.getElementById('btn-back-from-history').addEventListener('click', () => this.loadCalculateScreen());
   },
 
   /**
@@ -93,9 +99,11 @@ const App = {
   handleLogout() {
     if (confirm('¿Está seguro de cerrar sesión?')) {
       API.logout();
-      State.reset();
+      State.clearUser();
+      State.stopUpdateTimer();
       UI.resetForms();
       UI.showScreen('screen-login');
+      // NO limpiar las producciones activas - se mantienen para el siguiente usuario
     }
   },
 
@@ -117,11 +125,32 @@ const App = {
         document.getElementById('user-name').textContent = State.user.name;
       }
 
+      // Mostrar producciones activas si existen
+      UI.updateActiveProductionsList();
+
       UI.showScreen('screen-calculate');
     } catch (error) {
       console.error('Error al cargar pantalla de cálculo:', error);
       UI.showError('calculate-error', 'Error al cargar datos');
     }
+  },
+
+  /**
+   * Selecciona una producción de la lista
+   */
+  selectProduction(index) {
+    const production = State.selectProduction(index);
+    if (production) {
+      this.showProductionScreen(production);
+    }
+  },
+
+  /**
+   * Muestra la pantalla de producción con los datos de la producción especificada
+   */
+  showProductionScreen(production) {
+    UI.updateProductionScreen(production);
+    UI.showScreen('screen-production');
   },
 
   /**
@@ -189,11 +218,11 @@ const App = {
         State.currentCalculation.ingredients
       );
 
-      State.setProduction(result.production);
+      // Agregar producción al array de producciones activas
+      State.addProduction(result.production);
 
       // Mostrar pantalla de producción
-      UI.updateProductionScreen(result.production);
-      UI.showScreen('screen-production');
+      this.showProductionScreen(result.production);
 
       // Iniciar temporizador de actualización
       State.startUpdateTimer(() => this.updateProductionStatus());
@@ -245,6 +274,14 @@ const App = {
    * Maneja el avance a la siguiente fase
    */
   async handleNextPhase() {
+    // Si no hay fase actual, significa que ya se completaron todas
+    // y solo necesitamos ir a la pantalla de finalización
+    if (!State.currentProduction.current_phase) {
+      State.stopUpdateTimer();
+      UI.showFinalizeScreen(State.currentProduction);
+      return;
+    }
+
     if (!confirm('¿Avanzar a la siguiente fase?')) {
       return;
     }
@@ -265,7 +302,18 @@ const App = {
         UI.updateProductionScreen(State.currentProduction);
       }
     } catch (error) {
-      alert(error.message || 'Error al avanzar fase');
+      // Si el error es "No hay fase actual", significa que ya terminaron todas las fases
+      // Actualizar el estado local y mostrar pantalla de finalización
+      if (error.message && error.message.includes('No hay fase actual')) {
+        console.log('Todas las fases completadas, actualizando estado local');
+        State.updateProduction({
+          current_phase: null,
+        });
+        State.stopUpdateTimer();
+        UI.showFinalizeScreen(State.currentProduction);
+      } else {
+        alert(error.message || 'Error al avanzar fase');
+      }
     }
   },
 
@@ -320,7 +368,7 @@ const App = {
       );
 
       State.clearProduction();
-      UI.showSuccessScreen(result.production);
+      UI.showSuccessScreen(result);
     } catch (error) {
       UI.showError('finalize-error', error.message || 'Error al finalizar producción');
     }
@@ -330,11 +378,32 @@ const App = {
    * Maneja nueva producción
    */
   async handleNewProduction() {
-    State.clearProduction();
     UI.resetForms();
     await this.loadCalculateScreen();
   },
+
+  /**
+   * Carga la pantalla de historial
+   */
+  async loadHistoryScreen() {
+    try {
+      UI.toggleElement('history-loading', true);
+      UI.toggleElement('history-list', false);
+      UI.toggleElement('history-empty', false);
+      UI.toggleElement('history-error', false);
+      UI.showScreen('screen-history');
+
+      const result = await API.getProductionHistory(50, 0);
+      UI.showHistoryScreen(result.history);
+    } catch (error) {
+      console.error('Error cargando historial:', error);
+      UI.showHistoryError(error.message || 'Error al cargar el historial');
+    }
+  },
 };
+
+// Exponer App globalmente para que sea accesible desde event listeners
+window.App = App;
 
 // Inicializar la aplicación cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {

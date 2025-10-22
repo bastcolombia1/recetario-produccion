@@ -102,10 +102,25 @@ const UI = {
     document.getElementById('production-recipe-name').textContent = production.recipe_name;
     document.getElementById('production-code').textContent = production.code;
 
+    const nextPhaseBtn = document.getElementById('btn-next-phase');
+
     if (production.current_phase) {
+      // Hay fase actual - mostrar normalmente
       const phaseIcon = CONFIG.PHASE_ICONS[production.current_phase.name] || '⚙️';
       document.getElementById('current-phase-name').textContent = `${phaseIcon} ${production.current_phase.name.toUpperCase()}`;
       document.getElementById('estimated-time').textContent = `${production.current_phase.estimated_minutes || 0} min`;
+
+      // Botón en modo normal
+      nextPhaseBtn.textContent = '▶️ SIGUIENTE FASE';
+      nextPhaseBtn.className = 'btn btn-primary btn-large';
+    } else {
+      // No hay fase actual - todas las fases completadas
+      document.getElementById('current-phase-name').textContent = '✅ TODAS LAS FASES COMPLETADAS';
+      document.getElementById('estimated-time').textContent = 'Listo para finalizar';
+
+      // Cambiar botón a "FINALIZAR PRODUCCIÓN"
+      nextPhaseBtn.textContent = '✅ FINALIZAR PRODUCCIÓN';
+      nextPhaseBtn.className = 'btn btn-success btn-large';
     }
 
     this.updateElapsedTime(production);
@@ -233,8 +248,8 @@ const UI = {
    * Muestra la pantalla de éxito
    */
   showSuccessScreen(production) {
-    document.getElementById('success-production-code').textContent = production.code;
-    document.getElementById('success-yield').textContent = `${(production.real_yield * 100).toFixed(1)}%`;
+    document.getElementById('success-production-code').textContent = production.code || 'N/A';
+    document.getElementById('success-yield').textContent = `${(production.real_yield || 0).toFixed(1)}%`;
 
     this.showScreen('screen-success');
   },
@@ -257,5 +272,162 @@ const UI = {
     this.toggleElement('ingredient-info', false);
     this.toggleElement('calculation-results', false);
     this.toggleElement('yield-info', false);
+  },
+
+  /**
+   * Muestra la lista de producciones activas
+   */
+  showActiveProductions(productions, selectedIndex) {
+    const section = document.getElementById('active-productions-section');
+    const list = document.getElementById('active-productions-list');
+
+    if (!productions || productions.length === 0) {
+      section.classList.add('hidden');
+      return;
+    }
+
+    section.classList.remove('hidden');
+    list.innerHTML = '';
+
+    productions.forEach((production, index) => {
+      const card = document.createElement('div');
+      card.className = 'production-card';
+      if (index === selectedIndex) {
+        card.classList.add('selected');
+      }
+      card.dataset.index = index;
+
+      // Calcular tiempo transcurrido
+      let elapsed = 0;
+      let timeText = 'Sin iniciar';
+      if (production.start_time) {
+        const startTime = new Date(production.start_time);
+        if (!isNaN(startTime.getTime())) {
+          elapsed = Math.floor((Date.now() - startTime.getTime()) / 60000); // minutos
+          timeText = `${elapsed} min`;
+        }
+      }
+
+      // Determinar fase actual
+      const currentPhase = production.current_phase || { name: 'Iniciando...' };
+      const phaseIcon = CONFIG.PHASE_ICONS[currentPhase.name] || '📋';
+
+      card.innerHTML = `
+        <div class="production-card-header">
+          <div class="production-card-title">${production.recipe_name || 'Producción'}</div>
+          <div class="production-card-code">${production.code || 'N/A'}</div>
+        </div>
+        <div class="production-card-phase">${phaseIcon} ${currentPhase.name}</div>
+        <div class="production-card-time">⏱️ Tiempo: ${timeText}</div>
+      `;
+
+      card.addEventListener('click', () => {
+        if (window.App && window.App.selectProduction) {
+          window.App.selectProduction(index);
+        }
+      });
+
+      list.appendChild(card);
+    });
+  },
+
+  /**
+   * Actualiza la lista de producciones activas
+   */
+  updateActiveProductionsList() {
+    if (State.productions && State.productions.length > 0) {
+      this.showActiveProductions(State.productions, State.selectedProductionIndex);
+    } else {
+      this.toggleElement('active-productions-section', false);
+    }
+  },
+
+  /**
+   * Muestra la pantalla de historial
+   */
+  showHistoryScreen(history) {
+    this.showScreen('screen-history');
+
+    const historyList = document.getElementById('history-list');
+
+    // Ocultar mensajes
+    this.toggleElement('history-loading', false);
+    this.toggleElement('history-empty', false);
+    this.toggleElement('history-error', false);
+
+    if (!history || history.length === 0) {
+      this.toggleElement('history-empty', true);
+      historyList.innerHTML = '';
+      return;
+    }
+
+    // Renderizar items de historial
+    historyList.innerHTML = history.map(item => {
+      const stateClass = item.state === 'finished' ? 'finished' : 'cancelled';
+      const stateText = item.state === 'finished' ? 'Finalizada' : 'Cancelada';
+
+      // Color del rendimiento
+      let yieldClass = 'history-item-yield';
+      if (item.real_yield < 80) yieldClass += ' very-low';
+      else if (item.real_yield < 90) yieldClass += ' low';
+
+      // Formatear fecha
+      const finishDate = item.finish_datetime ? new Date(item.finish_datetime) : null;
+      const dateStr = finishDate ?
+        `${finishDate.toLocaleDateString()} ${finishDate.toLocaleTimeString('es-CO', {hour: '2-digit', minute: '2-digit'})}` :
+        'N/A';
+
+      return `
+        <div class="history-item ${item.state === 'cancelled' ? 'cancelled' : ''}">
+          <div class="history-item-header">
+            <div>
+              <div class="history-item-title">${item.recipe_name}</div>
+              <div class="history-item-code">${item.code}</div>
+            </div>
+            <span class="history-item-state ${stateClass}">${stateText}</span>
+          </div>
+
+          <div class="history-item-details">
+            <div class="history-item-detail">
+              <span class="history-item-detail-label">Cantidad esperada</span>
+              <span class="history-item-detail-value">${item.expected_qty.toFixed(2)} ${item.product_uom}</span>
+            </div>
+            <div class="history-item-detail">
+              <span class="history-item-detail-label">Cantidad obtenida</span>
+              <span class="history-item-detail-value">${item.actual_qty.toFixed(2)} ${item.product_uom}</span>
+            </div>
+            <div class="history-item-detail">
+              <span class="history-item-detail-label">Rendimiento</span>
+              <span class="history-item-detail-value ${yieldClass}">${item.real_yield}%</span>
+            </div>
+            <div class="history-item-detail">
+              <span class="history-item-detail-label">Duración</span>
+              <span class="history-item-detail-value">${item.duration_minutes} min</span>
+            </div>
+          </div>
+
+          <div class="history-item-footer">
+            📅 ${dateStr} | 👤 ${item.producer_name}
+            ${item.notes ? `<br>📝 ${item.notes}` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Mostrar la lista (quitar clase hidden)
+    this.toggleElement('history-list', true);
+  },
+
+  /**
+   * Muestra error en pantalla de historial
+   */
+  showHistoryError(message) {
+    this.toggleElement('history-loading', false);
+    this.toggleElement('history-list', false);
+    this.toggleElement('history-empty', false);
+
+    const errorEl = document.getElementById('history-error');
+    errorEl.textContent = message;
+    this.toggleElement('history-error', true);
   },
 };

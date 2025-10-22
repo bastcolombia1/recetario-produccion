@@ -9,8 +9,11 @@ const State = {
   // Receta seleccionada
   currentRecipe: null,
 
-  // Producción activa
-  currentProduction: null,
+  // Producciones activas (array)
+  productions: [],
+
+  // Producción seleccionada actualmente
+  selectedProductionIndex: 0,
 
   // Cálculo actual
   currentCalculation: null,
@@ -27,9 +30,43 @@ const State = {
       this.user = JSON.parse(userStr);
     }
 
-    const productionStr = localStorage.getItem(CONFIG.STORAGE_KEYS.PRODUCTION);
-    if (productionStr) {
-      this.currentProduction = JSON.parse(productionStr);
+    const productionsStr = localStorage.getItem(CONFIG.STORAGE_KEYS.PRODUCTIONS);
+    if (productionsStr) {
+      this.productions = JSON.parse(productionsStr);
+
+      // Limpiar producciones con datos inválidos
+      this.productions = this.productions.filter(prod => {
+        // Verificar que tenga ID y código
+        if (!prod.id || !prod.code) {
+          console.warn('Producción sin ID o código eliminada:', prod);
+          return false;
+        }
+
+        // Validar fecha de inicio
+        if (prod.start_time) {
+          const startTime = new Date(prod.start_time);
+          if (isNaN(startTime.getTime())) {
+            console.warn('Producción con fecha inválida eliminada:', prod);
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+      // Guardar producciones limpias
+      if (productionsStr !== JSON.stringify(this.productions)) {
+        this._saveProductions();
+        console.log('Producciones limpiadas:', this.productions.length);
+      }
+    }
+
+    // Migrar datos antiguos si existen
+    const oldProductionStr = localStorage.getItem(CONFIG.STORAGE_KEYS.PRODUCTION);
+    if (oldProductionStr && this.productions.length === 0) {
+      this.productions = [JSON.parse(oldProductionStr)];
+      localStorage.setItem(CONFIG.STORAGE_KEYS.PRODUCTIONS, JSON.stringify(this.productions));
+      localStorage.removeItem(CONFIG.STORAGE_KEYS.PRODUCTION);
     }
   },
 
@@ -64,19 +101,79 @@ const State = {
   },
 
   /**
-   * Guarda la producción activa
+   * Obtiene la producción actualmente seleccionada
    */
-  setProduction(production) {
-    this.currentProduction = production;
-    localStorage.setItem(CONFIG.STORAGE_KEYS.PRODUCTION, JSON.stringify(production));
+  get currentProduction() {
+    if (this.productions.length > 0 && this.selectedProductionIndex < this.productions.length) {
+      return this.productions[this.selectedProductionIndex];
+    }
+    return null;
   },
 
   /**
-   * Limpia la producción activa
+   * Agrega una nueva producción
+   */
+  addProduction(production) {
+    this.productions.push(production);
+    this.selectedProductionIndex = this.productions.length - 1;
+    this._saveProductions();
+  },
+
+  /**
+   * Guarda la producción activa (compatibilidad con código antiguo)
+   */
+  setProduction(production) {
+    if (this.productions.length === 0) {
+      this.addProduction(production);
+    } else {
+      this.productions[this.selectedProductionIndex] = production;
+      this._saveProductions();
+    }
+  },
+
+  /**
+   * Selecciona una producción por índice
+   */
+  selectProduction(index) {
+    if (index >= 0 && index < this.productions.length) {
+      this.selectedProductionIndex = index;
+      return this.productions[index];
+    }
+    return null;
+  },
+
+  /**
+   * Selecciona una producción por ID
+   */
+  selectProductionById(id) {
+    const index = this.productions.findIndex(p => p.id === id);
+    if (index >= 0) {
+      this.selectedProductionIndex = index;
+      return this.productions[index];
+    }
+    return null;
+  },
+
+  /**
+   * Limpia la producción activa (remueve la seleccionada)
    */
   clearProduction() {
-    this.currentProduction = null;
-    localStorage.removeItem(CONFIG.STORAGE_KEYS.PRODUCTION);
+    if (this.productions.length > 0) {
+      this.productions.splice(this.selectedProductionIndex, 1);
+      if (this.selectedProductionIndex >= this.productions.length) {
+        this.selectedProductionIndex = Math.max(0, this.productions.length - 1);
+      }
+      this._saveProductions();
+    }
+  },
+
+  /**
+   * Limpia todas las producciones
+   */
+  clearAllProductions() {
+    this.productions = [];
+    this.selectedProductionIndex = 0;
+    localStorage.removeItem(CONFIG.STORAGE_KEYS.PRODUCTIONS);
   },
 
   /**
@@ -84,9 +181,19 @@ const State = {
    */
   updateProduction(updates) {
     if (this.currentProduction) {
-      this.currentProduction = { ...this.currentProduction, ...updates };
-      localStorage.setItem(CONFIG.STORAGE_KEYS.PRODUCTION, JSON.stringify(this.currentProduction));
+      this.productions[this.selectedProductionIndex] = {
+        ...this.productions[this.selectedProductionIndex],
+        ...updates
+      };
+      this._saveProductions();
     }
+  },
+
+  /**
+   * Guarda las producciones en localStorage
+   */
+  _saveProductions() {
+    localStorage.setItem(CONFIG.STORAGE_KEYS.PRODUCTIONS, JSON.stringify(this.productions));
   },
 
   /**
@@ -112,7 +219,7 @@ const State = {
    */
   reset() {
     this.clearUser();
-    this.clearProduction();
+    this.clearAllProductions();
     this.currentRecipe = null;
     this.currentCalculation = null;
     this.stopUpdateTimer();

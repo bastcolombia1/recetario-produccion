@@ -83,7 +83,8 @@ const API = {
   logout() {
     this.clearToken();
     localStorage.removeItem(CONFIG.STORAGE_KEYS.USER);
-    localStorage.removeItem(CONFIG.STORAGE_KEYS.PRODUCTION);
+    // NO eliminar las producciones activas al hacer logout
+    // localStorage.removeItem(CONFIG.STORAGE_KEYS.PRODUCTION);
   },
 
   /**
@@ -126,19 +127,8 @@ const API = {
       producer_id: producerId,
     });
 
-    // Adaptar respuesta al formato esperado
-    return {
-      production: {
-        id: result.production_id,
-        code: result.name,
-        recipe_name: result.product,
-        expected_qty: result.quantity,
-        product_uom: 'kg',
-        state: result.state,
-        phases: [], // Las fases se cargarían después
-        current_phase: null,
-      }
-    };
+    // La API ya devuelve el objeto production completo
+    return result;
   },
 
   /**
@@ -194,5 +184,12 @@ const API = {
    */
   async getProducers() {
     return await this.request(CONFIG.API.PRODUCERS);
+  },
+
+  /**
+   * Obtiene historial de producciones finalizadas
+   */
+  async getProductionHistory(limit = 50, offset = 0) {
+    return await this.request(`${CONFIG.API.HISTORY}?limit=${limit}&offset=${offset}`);
   },
 };

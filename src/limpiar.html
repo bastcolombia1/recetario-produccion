@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Limpiar Datos - Recetario</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+        }
+        button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background: #c82333;
+        }
+        .success {
+            background: #28a745;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🗑️ Limpiar Datos de la App</h1>
+    <p>Esto eliminará todas las producciones guardadas en el navegador.</p>
+
+    <button onclick="limpiarTodo()">Limpiar Todo</button>
+    <button onclick="window.location.href='index.html'" style="background: #6c757d;">Volver a la App</button>
+
+    <div id="success" class="success"></div>
+
+    <script>
+        function limpiarTodo() {
+            if (confirm('¿Estás seguro de eliminar todos los datos guardados en el navegador?')) {
+                // Limpiar localStorage
+                localStorage.clear();
+
+                // Mostrar mensaje
+                const success = document.getElementById('success');
+                success.textContent = '✅ Datos eliminados correctamente';
+                success.style.display = 'block';
+
+                console.log('✅ localStorage limpiado');
+
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+            }
+        }
+
+        // Mostrar lo que hay en localStorage
+        console.log('Datos actuales en localStorage:');
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            console.log(`  - ${key}:`, localStorage.getItem(key));
+        }
+    </script>
+</body>
+</html>

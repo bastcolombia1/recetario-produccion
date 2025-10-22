@@ -17,7 +17,7 @@
   --color-border: #dee2e6;
   --color-text: #212529;
   --color-text-light: #6c757d;
-  --color-areperia: #f7d437;
+  --color-areperia: #ffed00;
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
@@ -558,4 +558,184 @@ textarea.input-field {
   .btn:active {
     transform: scale(0.98);
   }
+}
+
+/* ======================== LISTA DE PRODUCCIONES ACTIVAS ======================== */
+.productions-list {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.production-card {
+  background: var(--color-white);
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: var(--shadow);
+  border-left: 4px solid var(--color-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.production-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.production-card.selected {
+  border-left-color: var(--color-success);
+  background: #f0f9f4;
+}
+
+.production-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.production-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-dark);
+}
+
+.production-card-code {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+  background: var(--color-light);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.production-card-phase {
+  font-size: 0.9rem;
+  color: var(--color-primary);
+  margin-bottom: 5px;
+}
+
+.production-card-time {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+}
+
+#active-productions-section h3 {
+  color: var(--color-dark);
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+}
+
+/* ========== HISTORIAL ========== */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-item {
+  background: var(--color-white);
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: var(--shadow);
+  border-left: 4px solid var(--color-primary);
+}
+
+.history-item.cancelled {
+  border-left-color: var(--color-danger);
+  opacity: 0.8;
+}
+
+.history-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.history-item-title {
+  font-weight: bold;
+  color: var(--color-dark);
+  font-size: 1rem;
+}
+
+.history-item-code {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+  font-family: monospace;
+}
+
+.history-item-state {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.history-item-state.finished {
+  background: var(--color-success);
+  color: white;
+}
+
+.history-item-state.cancelled {
+  background: var(--color-danger);
+  color: white;
+}
+
+.history-item-details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.history-item-detail {
+  display: flex;
+  flex-direction: column;
+}
+
+.history-item-detail-label {
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+  margin-bottom: 2px;
+}
+
+.history-item-detail-value {
+  font-weight: bold;
+  color: var(--color-dark);
+  font-size: 0.9rem;
+}
+
+.history-item-yield {
+  color: var(--color-success);
+}
+
+.history-item-yield.low {
+  color: var(--color-warning);
+}
+
+.history-item-yield.very-low {
+  color: var(--color-danger);
+}
+
+.history-item-footer {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+}
+
+.loading-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-text-light);
+  font-size: 1.1rem;
+}
+
+.empty-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-text-light);
+  font-size: 1rem;
 }
