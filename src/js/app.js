@@ -374,6 +374,36 @@ const App = {
       return;
     }
 
+    // Calcular rendimiento
+    const expectedQty = State.currentProduction.expected_qty || 0;
+    const actualQtyNum = parseFloat(actualQty);
+    const yieldPercentage = expectedQty > 0 ? (actualQtyNum / expectedQty) * 100 : 100;
+
+    // Verificar si alguna fase excedió el tiempo en más del 5%
+    let phaseExceeded = false;
+    if (State.currentProduction.phases && Array.isArray(State.currentProduction.phases)) {
+      phaseExceeded = State.currentProduction.phases.some(phase => {
+        if (phase.estimated_minutes && phase.estimated_minutes > 0 && phase.actual_minutes) {
+          const threshold = phase.estimated_minutes * 1.05; // 105% del tiempo estimado
+          return phase.actual_minutes > threshold;
+        }
+        return false;
+      });
+    }
+
+    // Validar observaciones si rendimiento < 97% O si alguna fase excedió 105% del tiempo
+    if ((yieldPercentage < 97 || phaseExceeded) && (!notes || notes.trim() === '')) {
+      let errorMsg = 'Debe ingresar observaciones porque:\n';
+      if (yieldPercentage < 97) {
+        errorMsg += `- Rendimiento: ${yieldPercentage.toFixed(2)}% (menor al 97%)\n`;
+      }
+      if (phaseExceeded) {
+        errorMsg += '- Una o más fases excedieron el tiempo estimado en más del 5%';
+      }
+      UI.showError('finalize-error', errorMsg);
+      return;
+    }
+
     if (!confirm('¿Finalizar producción?')) {
       return;
     }
