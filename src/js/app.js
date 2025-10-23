@@ -383,9 +383,9 @@ const App = {
     let phaseExceeded = false;
     if (State.currentProduction.phases && Array.isArray(State.currentProduction.phases)) {
       phaseExceeded = State.currentProduction.phases.some(phase => {
-        if (phase.estimated_minutes && phase.estimated_minutes > 0 && phase.actual_minutes) {
+        if (phase.estimated_minutes && phase.estimated_minutes > 0 && phase.actual_duration) {
           const threshold = phase.estimated_minutes * 1.05; // 105% del tiempo estimado
-          return phase.actual_minutes > threshold;
+          return phase.actual_duration > threshold;
         }
         return false;
       });
@@ -393,13 +393,15 @@ const App = {
 
     // Validar observaciones si rendimiento < 97% O si alguna fase excedió 105% del tiempo
     if ((yieldPercentage < 97 || phaseExceeded) && (!notes || notes.trim() === '')) {
-      let errorMsg = 'Debe ingresar observaciones porque:\n';
+      let errorMsg = 'El campo de observaciones es obligatorio.\n\nMotivo: ';
+      const reasons = [];
       if (yieldPercentage < 97) {
-        errorMsg += `- Rendimiento: ${yieldPercentage.toFixed(2)}% (menor al 97%)\n`;
+        reasons.push(`El rendimiento es ${yieldPercentage.toFixed(1)}% (debe ser mayor o igual al 97%)`);
       }
       if (phaseExceeded) {
-        errorMsg += '- Una o más fases excedieron el tiempo estimado en más del 5%';
+        reasons.push('Una o más fases tardaron más del 5% del tiempo estimado');
       }
+      errorMsg += reasons.join(' y ') + '.';
       UI.showError('finalize-error', errorMsg);
       return;
     }
