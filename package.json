@@ -1,0 +1,32 @@
+{
+  "name": "recetario-produccion",
+  "version": "1.0.0",
+  "description": "Aplicación móvil para control de procesos de producción en centro de producción de La Arepería.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:dev": "cp src/js/config.dev.js src/js/config.js",
+    "build:prod": "cp src/js/config.prod.js src/js/config.js",
+    "cap:add:android": "npx cap add android",
+    "cap:sync": "npx cap sync",
+    "cap:open:android": "npx cap open android",
+    "android:dev": "npm run build:dev && npm run cap:sync && npm run cap:open:android",
+    "android:prod": "npm run build:prod && npm run cap:sync && npm run cap:open:android"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bastcolombia1/recetario-produccion.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bastcolombia1/recetario-produccion/issues"
+  },
+  "homepage": "https://github.com/bastcolombia1/recetario-produccion#readme",
+  "dependencies": {
+    "@capacitor/android": "^7.4.4",
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^7.4.4"
+  }
+}
