@@ -1,10 +1,11 @@
 /**
- * Configuración para PRODUCCIÓN
+ * Configuración para PRODUCCIÓN (APK)
+ * APK necesita URL completa porque se carga localmente
  */
 
 const CONFIG = {
-  // URL base de Odoo - PRODUCCIÓN
-  ODOO_URL: 'https://odoo.bastcolombia.com',  // TODO: Actualizar con URL real de producción
+  // URL base para APK - debe apuntar al servidor nginx
+  ODOO_URL: 'http://192.168.0.1',
 
   // Endpoints API
   API: {
@@ -42,5 +43,5 @@ const CONFIG = {
   },
 
   // Modo de desarrollo
-  DEBUG: false,
+  DEBUG: true,
 };

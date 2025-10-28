@@ -3,8 +3,8 @@
  */
 
 const CONFIG = {
-  // URL base de Odoo - DESARROLLO
-  ODOO_URL: 'http://192.168.0.1:8071',
+  // URL base vacío = usa la misma URL desde donde se carga la app (NGINX)
+  ODOO_URL: '',
 
   // Endpoints API
   API: {
