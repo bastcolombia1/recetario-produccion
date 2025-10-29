@@ -151,3 +151,8 @@ src/js/config.js
 *.aab
 *.keystore
 .gradle/
+
+# Python virtual environments
+locust-env/
+venv/
+.venv/
