@@ -28,7 +28,7 @@ const API = {
    * Realiza una petición HTTP a la API de Odoo
    */
   async request(endpoint, method = 'GET', data = null) {
-    const url = `${CONFIG.ODOO_URL}${endpoint}`;
+    const url = `${CONFIG.getServerUrl()}${endpoint}`;
     const headers = {
       'Content-Type': 'application/json',
     };

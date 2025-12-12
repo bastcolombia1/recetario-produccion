@@ -5,7 +5,7 @@
 
 const CONFIG = {
   // URL base para APK - WiFi (192.168.1.x)
-  ODOO_URL: 'http://192.168.1.21',
+  ODOO_URL: 'http://192.168.1.12',
 
   // Endpoints API
   API: {
@@ -31,6 +31,51 @@ const CONFIG = {
     USER: 'current_user',
     PRODUCTION: 'current_production', // Deprecated - usar PRODUCTIONS
     PRODUCTIONS: 'active_productions',
+    SERVER_CONFIG: 'server_config',
+  },
+
+  /**
+   * Obtiene la URL del servidor (desde localStorage o valor por defecto)
+   */
+  getServerUrl() {
+    const saved = localStorage.getItem(this.STORAGE_KEYS.SERVER_CONFIG);
+    if (saved) {
+      try {
+        const config = JSON.parse(saved);
+        const port = config.port && config.port !== '80' && config.port !== '' ? ':' + config.port : '';
+        return 'http://' + config.ip + port;
+      } catch (e) {
+        console.error('Error parsing server config:', e);
+      }
+    }
+    return this.ODOO_URL;
+  },
+
+  /**
+   * Guarda la configuración del servidor
+   */
+  saveServerConfig(ip, port) {
+    localStorage.setItem(this.STORAGE_KEYS.SERVER_CONFIG, JSON.stringify({ ip, port: port || '80' }));
+  },
+
+  /**
+   * Obtiene la configuración actual del servidor
+   */
+  getServerConfig() {
+    const saved = localStorage.getItem(this.STORAGE_KEYS.SERVER_CONFIG);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Error parsing server config:', e);
+      }
+    }
+    try {
+      const url = new URL(this.ODOO_URL);
+      return { ip: url.hostname, port: url.port || '80' };
+    } catch (e) {
+      return { ip: '192.168.1.12', port: '80' };
+    }
   },
 
   // Iconos para fases

@@ -69,6 +69,13 @@ const App = {
 
     // Historial
     document.getElementById('btn-back-from-history').addEventListener('click', () => this.loadCalculateScreen());
+
+    // Configuración del servidor
+    document.getElementById('btn-config').addEventListener('click', () => this.openConfigModal());
+    document.getElementById('btn-test-connection').addEventListener('click', () => this.testConnection());
+    document.getElementById('btn-save-config').addEventListener('click', () => this.saveConfig());
+    document.getElementById('btn-cancel-config').addEventListener('click', () => this.closeConfigModal());
+    document.getElementById('modal-overlay').addEventListener('click', () => this.closeConfigModal());
   },
 
   /**
@@ -451,6 +458,101 @@ const App = {
       console.error('Error cargando historial:', error);
       UI.showHistoryError(error.message || 'Error al cargar el historial');
     }
+  },
+
+  /**
+   * Abre el modal de configuración del servidor
+   */
+  openConfigModal() {
+    const config = CONFIG.getServerConfig();
+    document.getElementById('config-ip').value = config.ip || '';
+    document.getElementById('config-port').value = config.port || '80';
+    document.getElementById('current-url').textContent = CONFIG.getServerUrl();
+    this.hideConfigStatus();
+    document.getElementById('modal-config').classList.remove('hidden');
+  },
+
+  /**
+   * Cierra el modal de configuración
+   */
+  closeConfigModal() {
+    document.getElementById('modal-config').classList.add('hidden');
+  },
+
+  /**
+   * Muestra el estado de la configuración
+   */
+  showConfigStatus(message, type) {
+    const statusEl = document.getElementById('config-status');
+    statusEl.textContent = message;
+    statusEl.className = 'config-status ' + type;
+    statusEl.classList.remove('hidden');
+  },
+
+  /**
+   * Oculta el estado de la configuración
+   */
+  hideConfigStatus() {
+    document.getElementById('config-status').classList.add('hidden');
+  },
+
+  /**
+   * Prueba la conexión con el servidor
+   */
+  async testConnection() {
+    const ip = document.getElementById('config-ip').value.trim();
+    const port = document.getElementById('config-port').value.trim() || '80';
+
+    if (!ip) {
+      this.showConfigStatus('Ingrese una dirección IP', 'error');
+      return;
+    }
+
+    // Construir URL temporal para probar
+    const portStr = port && port !== '80' ? ':' + port : '';
+    const testUrl = 'http://' + ip + portStr;
+
+    this.showConfigStatus('Probando conexión...', 'loading');
+
+    try {
+      const response = await fetch(testUrl + CONFIG.API.RECIPES, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5000)
+      });
+
+      // 200 = OK, 401 = No autorizado (pero servidor alcanzable)
+      if (response.ok || response.status === 401) {
+        this.showConfigStatus('Conexión exitosa', 'success');
+      } else {
+        this.showConfigStatus('Servidor respondió con error: ' + response.status, 'error');
+      }
+    } catch (error) {
+      console.error('Error de conexión:', error);
+      this.showConfigStatus('No se pudo conectar al servidor', 'error');
+    }
+  },
+
+  /**
+   * Guarda la configuración del servidor
+   */
+  saveConfig() {
+    const ip = document.getElementById('config-ip').value.trim();
+    const port = document.getElementById('config-port').value.trim() || '80';
+
+    if (!ip) {
+      this.showConfigStatus('Ingrese una dirección IP', 'error');
+      return;
+    }
+
+    CONFIG.saveServerConfig(ip, port);
+    document.getElementById('current-url').textContent = CONFIG.getServerUrl();
+    this.showConfigStatus('Configuración guardada', 'success');
+
+    // Cerrar modal después de 1 segundo
+    setTimeout(() => {
+      this.closeConfigModal();
+    }, 1000);
   },
 };
 
