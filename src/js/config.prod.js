@@ -4,8 +4,8 @@
  */
 
 const CONFIG = {
-  // URL base para APK - debe apuntar al servidor nginx
-  ODOO_URL: 'http://192.168.0.1',
+  // URL base para APK - apunta al servidor VPS (Producción)
+  ODOO_URL: 'http://209.126.125.39:8079',
 
   // Endpoints API
   API: {
@@ -29,7 +29,7 @@ const CONFIG = {
   STORAGE_KEYS: {
     TOKEN: 'auth_token',
     USER: 'current_user',
-    PRODUCTION: 'current_production', // Deprecated - usar PRODUCTIONS
+    PRODUCTION: 'current_production',
     PRODUCTIONS: 'active_productions',
   },
 
@@ -43,5 +43,5 @@ const CONFIG = {
   },
 
   // Modo de desarrollo
-  DEBUG: true,
+  DEBUG: false,
 };

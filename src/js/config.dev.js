@@ -1,10 +1,11 @@
 /**
  * Configuración para DESARROLLO
+ * Para pruebas en ambiente de desarrollo
  */
 
 const CONFIG = {
-  // URL base vacío = usa la misma URL desde donde se carga la app (NGINX)
-  ODOO_URL: '',
+  // URL base para desarrollo - apunta al servidor VPS (Desarrollo)
+  ODOO_URL: 'http://209.126.125.39:8081',
 
   // Endpoints API
   API: {
@@ -28,7 +29,7 @@ const CONFIG = {
   STORAGE_KEYS: {
     TOKEN: 'auth_token',
     USER: 'current_user',
-    PRODUCTION: 'current_production', // Deprecated - usar PRODUCTIONS
+    PRODUCTION: 'current_production',
     PRODUCTIONS: 'active_productions',
   },
 

@@ -8,6 +8,7 @@ const App = {
    */
   async init() {
     console.log('🚀 Inicializando aplicación...');
+    console.log(`📱 Versión: ${CONFIG.APP_VERSION} (${CONFIG.APP_VERSION_CODE})`);
 
     // Inicializar estado
     State.init();
@@ -23,6 +24,112 @@ const App = {
     }
 
     console.log('✅ Aplicación inicializada');
+
+    // Verificar actualizaciones en segundo plano
+    this.checkForUpdates();
+  },
+
+  /**
+   * Verifica si hay actualizaciones disponibles
+   */
+  async checkForUpdates() {
+    try {
+      const update = await CONFIG.checkForUpdates();
+
+      if (update.available) {
+        console.log(`🆕 Nueva versión disponible: ${update.version}`);
+        this.showUpdateNotification(update);
+      } else {
+        console.log('✅ App actualizada');
+      }
+    } catch (error) {
+      console.log('No se pudo verificar actualizaciones');
+    }
+  },
+
+  /**
+   * Muestra notificación de actualización disponible
+   */
+  showUpdateNotification(update) {
+    // Crear elemento de notificación si no existe
+    let notification = document.getElementById('update-notification');
+    if (!notification) {
+      notification = document.createElement('div');
+      notification.id = 'update-notification';
+      notification.innerHTML = `
+        <div class="update-content">
+          <div class="update-icon">🆕</div>
+          <div class="update-text">
+            <strong>Nueva versión ${update.version}</strong>
+            <small>Toca para actualizar</small>
+          </div>
+          <button class="update-close" onclick="App.dismissUpdate()">✕</button>
+        </div>
+      `;
+      notification.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 16px;
+        z-index: 9999;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      `;
+      notification.querySelector('.update-content').style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        max-width: 500px;
+        margin: 0 auto;
+      `;
+      notification.querySelector('.update-icon').style.cssText = `
+        font-size: 24px;
+      `;
+      notification.querySelector('.update-text').style.cssText = `
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      `;
+      notification.querySelector('.update-text small').style.cssText = `
+        opacity: 0.9;
+        font-size: 12px;
+      `;
+      notification.querySelector('.update-close').style.cssText = `
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 14px;
+      `;
+
+      notification.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('update-close')) {
+          window.open(update.downloadUrl, '_system');
+        }
+      });
+
+      document.body.prepend(notification);
+
+      // Ajustar padding del body para compensar la notificación
+      document.body.style.paddingTop = '60px';
+    }
+  },
+
+  /**
+   * Oculta la notificación de actualización
+   */
+  dismissUpdate() {
+    const notification = document.getElementById('update-notification');
+    if (notification) {
+      notification.remove();
+      document.body.style.paddingTop = '0';
+    }
   },
 
   /**

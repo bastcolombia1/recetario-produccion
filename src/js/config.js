@@ -4,6 +4,14 @@
  */
 
 const CONFIG = {
+  // Versión actual de la app
+  APP_VERSION: '1.1.0',
+  APP_VERSION_CODE: 2,
+
+  // URL para verificar actualizaciones (VPS público)
+  UPDATE_URL: 'http://209.126.125.39:8082/apk/version.json',
+  DOWNLOAD_PAGE_URL: 'http://209.126.125.39:8082/apk/',
+
   // URL base para APK - WiFi (192.168.1.x)
   ODOO_URL: 'http://192.168.1.12',
 
@@ -89,4 +97,42 @@ const CONFIG = {
 
   // Modo de desarrollo
   DEBUG: true,
+
+  /**
+   * Verifica si hay una actualización disponible
+   * @returns {Promise<{available: boolean, version?: string, changelog?: string[], downloadUrl?: string}>}
+   */
+  async checkForUpdates() {
+    try {
+      const response = await fetch(this.UPDATE_URL, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5000)
+      });
+
+      if (!response.ok) {
+        console.log('No se pudo verificar actualizaciones');
+        return { available: false };
+      }
+
+      const data = await response.json();
+      const serverVersionCode = data.versionCode || 0;
+
+      if (serverVersionCode > this.APP_VERSION_CODE) {
+        return {
+          available: true,
+          version: data.version,
+          versionCode: data.versionCode,
+          changelog: data.changelog || [],
+          downloadUrl: this.DOWNLOAD_PAGE_URL,
+          releaseDate: data.releaseDate
+        };
+      }
+
+      return { available: false };
+    } catch (error) {
+      console.log('Error verificando actualizaciones:', error.message);
+      return { available: false };
+    }
+  }
 };
