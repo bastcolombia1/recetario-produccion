@@ -1,114 +1,136 @@
-# Instalación de APK - Recetario La Arepería
+# Instalacion de APK - Recetario La Areperia
 
-## 📱 Ubicación de las APKs
+## Descarga de APK
 
-Todas las APKs están en:
+### Desde el navegador
+La APK se puede descargar directamente desde:
 ```
-/home/bast-automation/recetario-produccion/android/app/build/outputs/apk/debug/
+http://209.126.125.39:8082/apk/
 ```
 
-## 🔧 Versiones Disponibles
-
-### **app-debug.apk** (WiFi - Recomendada)
-- **Red:** WiFi (192.168.1.x)
-- **URL:** http://192.168.1.21
-- **Uso:** Dispositivos conectados a WiFi
-
-### **app-debug-ethernet.apk** (Ethernet)
-- **Red:** Ethernet (192.168.0.x)
-- **URL:** http://192.168.0.1
-- **Uso:** Dispositivos conectados por cable ethernet
-
-## 📲 Instalación
-
-### 1. Conectar dispositivo USB
+### Desde el servidor (adb)
 ```bash
-# Verificar que el dispositivo esté conectado
-adb devices
-```
-
-### 2. Instalar APK WiFi (más común)
-```bash
-cd /home/bast-automation/recetario-produccion/android/app/build/outputs/apk/debug
+cd /opt/odoo/erp-app2-dev/odoo-project/nginx/html/apk/
 adb install -r app-debug.apk
 ```
 
-### 3. Instalar APK Ethernet (si es necesario)
+## Instalacion en Android
+
+### Requisitos
+- Android 7.0 o superior
+- Permitir instalacion de fuentes desconocidas
+
+### Pasos
+1. Descargar la APK desde la URL del servidor
+2. Abrir el archivo descargado
+3. Si pide permisos de "fuentes desconocidas", habilitarlo
+4. Instalar la aplicacion
+
+### Via USB (desarrollo)
 ```bash
-cd /home/bast-automation/recetario-produccion/android/app/build/outputs/apk/debug
-adb install -r app-debug-ethernet.apk
+# Verificar dispositivo conectado
+adb devices
+
+# Instalar APK
+adb install -r app-debug.apk
 ```
 
-## 🌐 Acceso Web (sin instalar APK)
+## Configuracion Inicial
 
-La aplicación también funciona desde el navegador:
+Al abrir la app por primera vez:
 
-- **Ethernet:** http://192.168.0.1/recetario/
-- **WiFi:** http://192.168.1.21/recetario/
+1. Toque el icono de **engranaje** en la esquina inferior derecha de la pantalla de login
+2. Ingrese la **IP del servidor**: `209.126.125.39`
+3. Ingrese el **puerto**: `8081` (Odoo directo)
+4. Toque **Probar Conexion** para verificar que el servidor responde
+5. Si la conexion es exitosa, toque **Guardar**
+6. La configuracion se guarda en localStorage y persiste
 
-## 🔄 Regenerar APK
+### IPs segun entorno:
+| Entorno | IP | Puerto Odoo | Puerto Panel |
+|---------|-----|-------------|-------------|
+| VPS (produccion) | 209.126.125.39 | 8081 | 8082 |
+| Red local | (IP del servidor) | 8081 | 8082 |
 
-### Para WiFi (192.168.1.21):
+## Acceso Web (sin instalar APK)
+
+La aplicacion tambien funciona desde el navegador:
+```
+http://209.126.125.39:8082/recetario/
+```
+
+## Actualizaciones
+
+La app verifica automaticamente si hay actualizaciones al iniciar:
+- Consulta `http://209.126.125.39:8082/apk/version.json`
+- Si hay nueva version, muestra barra de notificacion
+- Al tocar la barra, abre la pagina de descarga
+
+### Publicar nueva version:
+1. Compilar la APK:
+   ```bash
+   cd /opt/odoo/erp-app2-dev/recetario-produccion
+   npx cap sync android
+   cd android
+   ./gradlew assembleDebug
+   ```
+2. Copiar APK al directorio de descarga:
+   ```bash
+   cp android/app/build/outputs/apk/debug/app-debug.apk \
+      /opt/odoo/erp-app2-dev/odoo-project/nginx/html/apk/
+   ```
+3. Actualizar `version.json`:
+   ```json
+   {
+     "version": "1.2.0",
+     "versionCode": 3,
+     "releaseDate": "2026-02-17",
+     "changelog": ["Descripcion del cambio"],
+     "downloadUrl": "http://209.126.125.39:8082/apk/app-debug.apk"
+   }
+   ```
+
+## Regenerar APK
+
 ```bash
-cd /home/bast-automation/recetario-produccion
-cp src/js/config.prod-wifi.js src/js/config.js
+cd /opt/odoo/erp-app2-dev/recetario-produccion
+
+# Actualizar version en config.js si es necesario
+# APP_VERSION y APP_VERSION_CODE
+
+# Sincronizar y compilar
 npx cap sync android
 cd android
 ./gradlew assembleDebug
+
+# La APK queda en:
+# android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-### Para Ethernet (192.168.0.1):
-```bash
-cd /home/bast-automation/recetario-produccion
-cp src/js/config.prod.js src/js/config.js
-npx cap sync android
-cd android
-./gradlew assembleDebug
-```
+## Credenciales de Prueba
 
-## 📝 Credenciales de Prueba
+- **PIN:** 12345
+- **Usuario:** Administrator
 
-**PIN:** 12345
-**Usuario:** Administrator
-
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### APK muestra "failed to fetch"
-1. Verificar que el dispositivo esté en la red correcta
-2. Verificar que nginx esté corriendo: `docker ps | grep nginx`
-3. Verificar que Odoo esté corriendo: `docker ps | grep odoo-cristian`
-4. Instalar la APK correcta según la red:
-   - WiFi → `app-debug.apk`
-   - Ethernet → `app-debug-ethernet.apk`
+1. Verificar configuracion del servidor (icono engranaje en login)
+2. Probar conexion desde el modal de configuracion
+3. Verificar que Odoo este corriendo: `docker compose ps`
+4. Verificar que el dispositivo tenga acceso a la red del servidor
+
+### La app no se conecta
+1. Verificar que la IP y puerto sean correctos en la configuracion
+2. Si usa red local, asegurar que el dispositivo este en la misma red
+3. Si usa VPS, verificar que los puertos esten abiertos
 
 ### Ver logs del dispositivo
 ```bash
 adb logcat | grep -i "chromium\|console\|error"
 ```
 
-## 📊 Arquitectura
+---
 
-```
-APK / Navegador
-    ↓
-Nginx (Puerto 80)
-    ├─ /recetario/ → Archivos estáticos
-    └─ /api/production/* → Proxy a Odoo
-        ↓
-    Odoo Container (odoo-cristian:8069)
-        └─ Módulo production_api
-```
-
-## 🎯 URLs Importantes
-
-- **Navegador Web:**
-  - http://192.168.0.1/recetario/ (Ethernet)
-  - http://192.168.1.21/recetario/ (WiFi)
-
-- **Odoo Admin:**
-  - http://192.168.0.1:8071 (Ethernet)
-  - http://192.168.1.21:8071 (WiFi)
-
-- **API Endpoints:**
-  - http://192.168.0.1/api/production/* (Ethernet)
-  - http://192.168.1.21/api/production/* (WiFi)
+**Ultima actualizacion:** 2026-02-17
+**Version app:** 1.1.0

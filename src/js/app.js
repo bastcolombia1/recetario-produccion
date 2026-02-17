@@ -16,6 +16,10 @@ const App = {
     // Registrar event listeners
     this.registerEventListeners();
 
+    // Inicializar audio en el primer gesto del usuario (requerido por navegadores)
+    document.addEventListener('click', () => UI.initAudio(), { once: true });
+    document.addEventListener('touchstart', () => UI.initAudio(), { once: true });
+
     // Verificar si hay sesión activa
     if (State.user) {
       await this.loadCalculateScreen();

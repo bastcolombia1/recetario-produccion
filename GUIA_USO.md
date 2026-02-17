@@ -1,173 +1,184 @@
-# Guía de Uso - Recetario de Producción
+# Guia de Uso - Recetario de Produccion
 
-## 🌐 Acceso por Navegador Web (RECOMENDADO)
+## Acceso por Navegador Web (RECOMENDADO)
 
-La aplicación funciona perfectamente desde el navegador en cualquier dispositivo conectado a la red.
+La aplicacion funciona desde el navegador en cualquier dispositivo conectado a la red.
 
 ### URLs de Acceso:
 
-**Red Ethernet (192.168.0.x):**
+**Servidor VPS (produccion):**
 ```
-http://192.168.0.1/recetario/
-```
-
-**Red WiFi (192.168.1.x):**
-```
-http://192.168.1.21/recetario/
+http://209.126.125.39:8082/recetario/
 ```
 
-### Credenciales de Prueba:
-- **PIN:** 12345
-- **Usuario:** Administrator
-
-### Dispositivos Probados:
-✅ Navegador en PC (192.168.1.21)
-✅ Navegador en dispositivo móvil (192.168.1.65) por WiFi
-✅ Navegador en dispositivo móvil por Ethernet
-
-## 📱 APK para Android (En desarrollo)
-
-**Estado:** La APK presenta problemas con peticiones HTTP desde Capacitor (Mixed Content). 
-
-**Problema conocido:** Capacitor en Android bloquea peticiones HTTP cuando la app se carga desde `https://localhost/`. A pesar de configurar:
-- `usesCleartextTraffic="true"`
-- `networkSecurityConfig`
-- `allowMixedContent: true`
-- `cleartext: true`
-
-El problema persiste y es un issue conocido de Capacitor/Android 9+.
-
-**Recomendación:** Usar el navegador web mientras se resuelve el issue de la APK.
-
-## 🏗️ Arquitectura Actual
-
+**Red local (si aplica):**
 ```
-┌─────────────────────────────────────────┐
-│  Dispositivo (Navegador o APK)          │
-│  - http://192.168.0.1/recetario/        │
-│  - http://192.168.1.21/recetario/       │
-└────────────────┬────────────────────────┘
-                 │
-                 ↓
-┌─────────────────────────────────────────┐
-│  Nginx (Puerto 80)                      │
-│  ├─ /recetario/ → Archivos estáticos    │
-│  └─ /api/production/* → Proxy a Odoo    │
-└────────────────┬────────────────────────┘
-                 │
-                 ↓
-┌─────────────────────────────────────────┐
-│  Odoo Container (odoo-cristian)         │
-│  - Puerto: 8069 (interno)               │
-│  - Puerto: 8071 (externo, directo)      │
-│  - Módulo: production_api               │
-└─────────────────────────────────────────┘
+http://IP_SERVIDOR/recetario/
 ```
 
-## 🔄 Regenerar APK (Si es necesario)
+### Credenciales:
+- **PIN:** Codigo de barras del empleado configurado en Odoo
+- **PIN de prueba:** 12345 (usuario Administrator)
 
-### Para WiFi (192.168.1.21):
-```bash
-cd /home/bast-automation/recetario-produccion
-cp src/js/config.prod-wifi.js src/js/config.js
-npx cap sync android
-cd android
-./gradlew assembleDebug
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+## APK para Android
+
+### Descarga
+La APK se descarga desde:
+```
+http://209.126.125.39:8082/apk/
 ```
 
-### Para Ethernet (192.168.0.1):
-```bash
-cd /home/bast-automation/recetario-produccion
-cp src/js/config.prod.js src/js/config.js
-npx cap sync android
-cd android
-./gradlew assembleDebug
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+### Configuracion del Servidor
+Al abrir la app por primera vez, configure la IP del servidor:
+1. En la pantalla de login, toque el icono de engranaje (esquina inferior derecha)
+2. Ingrese la IP del servidor (ej: `209.126.125.39`)
+3. Ingrese el puerto (ej: `8081` para Odoo directo, `80` si usa Nginx proxy)
+4. Toque **Probar Conexion** para verificar
+5. Toque **Guardar**
+
+La configuracion se almacena en localStorage y persiste entre sesiones.
+
+### Actualizaciones Automaticas
+La app verifica automaticamente si hay una nueva version al iniciar. Si detecta una actualizacion:
+- Muestra una barra de notificacion en la parte superior
+- Al tocar la barra, abre la pagina de descarga de la APK
+- Se puede cerrar la notificacion con el boton X
+
+## Pantallas de la Aplicacion
+
+### 1. Login
+- Ingrese el codigo de empleado (codigo de barras)
+- El sistema valida contra la API de Odoo
+
+### 2. Pantalla Principal (Calcular)
+- **Producciones activas**: Lista de producciones en progreso con tarjetas
+  - Cada tarjeta muestra: receta, fase actual, tiempo transcurrido
+  - Si una fase excede el tiempo estimado: tarjeta amarilla parpadeante + alerta sonora
+  - Boton "Avanzar Fase" rapido en tarjetas con fase vencida
+- **Nueva Produccion**: Seleccionar receta, ingresar cantidad, calcular
+- **Historial**: Ver producciones anteriores
+
+### 3. Produccion en Progreso
+- Fase actual con icono y nombre
+- Tiempo estimado vs tiempo transcurrido
+- Barra de progreso proporcional al tiempo:
+  - Verde: dentro del tiempo estimado
+  - Roja + parpadeo: fase vencida (tiempo > estimado)
+  - Alerta sonora (beep triple) al vencerse una fase
+- Lista de todas las fases con estado (completada/en progreso/pendiente)
+- Botones: Pausar, Reanudar, Siguiente Fase, Cancelar
+
+### 4. Finalizar Produccion
+- Ingresar cantidad real obtenida
+- Calculo automatico de rendimiento
+- Seleccionar productor
+- Observaciones obligatorias si:
+  - Rendimiento < 97%
+  - Alguna fase excedio 105% del tiempo estimado
+
+### 5. Confirmacion
+- Resumen de produccion finalizada
+- Opciones: Nueva Produccion o Ver Historial
+
+### 6. Historial
+- Lista de producciones anteriores (finalizadas y canceladas)
+- Muestra: receta, cantidad, rendimiento, duracion, productor, notas
+
+## Arquitectura
+
+```
+Dispositivo (Navegador o APK)
+    |
+    v
+Nginx (Puerto 8082 - Panel)         Odoo (Puerto 8081)
+  |-- /recetario/ -> HTML estaticos    |-- /api/production/* (API REST)
+  |-- /dashboard  -> Dashboard HTML    |-- /api/dashboard/summary
+  |-- /apk/       -> APK + version     |
+  |-- /           -> Panel produccion  |
+    |                                  |
+    +------ API calls ---------------->+
 ```
 
-## 🐛 Troubleshooting
+### Componentes:
+| Componente | Puerto | Descripcion |
+|-----------|--------|-------------|
+| Odoo | 8081 | Backend + API REST (production_api module) |
+| Nginx Panel | 8082 | Panel produccion TV + Dashboard + APK |
+| Recetario | 8082/recetario/ | App movil de produccion |
 
-### El navegador no carga la app
-1. Verificar que nginx esté corriendo:
+## Alertas de Tiempo
+
+El sistema monitorea el tiempo de cada fase y genera alertas cuando se excede:
+
+1. **Barra de progreso roja**: La barra cambia de verde a rojo cuando el tiempo transcurrido supera el estimado
+2. **Tiempo parpadeante**: El display de tiempo transcurrido parpadea en rojo
+3. **Alerta sonora**: Beep triple (880Hz) cuando una fase se vence por primera vez
+4. **Tarjeta amarilla**: En la lista de producciones activas, la tarjeta parpadea en amarillo
+5. **Boton rapido**: Aparece boton "Avanzar Fase" directamente en la tarjeta
+
+El audio se inicializa con el primer toque/click del usuario (requerido por navegadores modernos).
+
+## API Endpoints
+
+| Endpoint | Metodo | Descripcion |
+|----------|--------|-------------|
+| `/api/production/login` | POST | Login con codigo de empleado |
+| `/api/production/recipes` | GET | Lista de recetas disponibles |
+| `/api/production/producers` | GET | Lista de productores |
+| `/api/production/calculate` | POST | Calcular explosion de materiales |
+| `/api/production/start` | POST | Iniciar produccion |
+| `/api/production/advance_phase` | POST | Avanzar a siguiente fase |
+| `/api/production/pause` | POST | Pausar produccion |
+| `/api/production/resume` | POST | Reanudar produccion |
+| `/api/production/cancel` | POST | Cancelar produccion |
+| `/api/production/finalize` | POST | Finalizar produccion |
+| `/api/production/history` | GET | Historial de producciones |
+| `/api/production/board` | GET | Panel TV (producciones activas) |
+| `/api/dashboard/summary` | GET | Dashboard gerencial (KPIs + graficas) |
+
+## Troubleshooting
+
+### La app no carga
+1. Verificar que los containers Docker esten corriendo:
    ```bash
-   docker ps | grep nginx-ha
+   cd /opt/odoo/erp-app2-dev/odoo-project
+   docker compose ps
+   ```
+2. Reiniciar si es necesario:
+   ```bash
+   docker compose restart odoo nginx
    ```
 
-2. Verificar que Odoo esté corriendo:
-   ```bash
-   docker ps | grep odoo-cristian
-   ```
+### Error "NetworkError" o "failed to fetch"
+1. Verificar IP del servidor en la configuracion (icono engranaje)
+2. Probar la conexion desde el modal de configuracion
+3. Limpiar cache del navegador (Ctrl+Shift+R)
 
-3. Reiniciar nginx si es necesario:
-   ```bash
-   docker restart nginx-ha
-   ```
+### No suena la alerta de fase vencida
+1. El audio requiere al menos un toque/click previo en la app
+2. Verificar que el volumen del dispositivo no este en silencio
+3. Cada fase solo suena una vez (no se repite)
 
-### Error "NetworkError" en navegador
-1. Limpiar caché del navegador (Ctrl+Shift+R)
-2. Verificar que estés en la red correcta
-3. Probar con la otra IP (192.168.0.1 o 192.168.1.21)
-
-### La app no responde después de login
+### La app no responde despues de login
 1. Abrir consola de desarrollador (F12)
-2. Verificar errores en la pestaña Console
-3. Verificar que las peticiones API lleguen a `/api/production/*`
+2. Verificar errores en la pestana Console
+3. Verificar que las peticiones API lleguen al servidor
 
-## 📊 Monitoreo
+## Monitoreo
 
 ### Ver logs de Nginx:
 ```bash
-docker logs nginx-ha --tail 50
+cd /opt/odoo/erp-app2-dev/odoo-project
+docker compose logs nginx --tail 50
 ```
 
 ### Ver logs de Odoo:
 ```bash
-docker logs odoo-cristian --tail 50
+cd /opt/odoo/erp-app2-dev/odoo-project
+docker compose logs odoo --tail 50
 ```
-
-### Ver peticiones API en tiempo real:
-```bash
-docker logs nginx-ha -f | grep "api/production"
-```
-
-## 🎯 URLs Importantes
-
-### Aplicación Web:
-- http://192.168.0.1/recetario/ (Ethernet)
-- http://192.168.1.21/recetario/ (WiFi)
-
-### Odoo Admin:
-- http://192.168.0.1:8071 (Ethernet)
-- http://192.168.1.21:8071 (WiFi)
-
-### API Endpoints:
-- http://192.168.0.1/api/production/* (Ethernet)
-- http://192.168.1.21/api/production/* (WiFi)
-
-## 📝 Notas Importantes
-
-1. **Usar siempre el navegador para desarrollo** - Es más rápido y no requiere compilar APK
-2. **Las URLs funcionan desde cualquier dispositivo** en la misma red
-3. **El nginx maneja automáticamente** tanto archivos estáticos como proxy API
-4. **No es necesario especificar puerto** - nginx escucha en el puerto 80 (por defecto)
-
-## 🔐 Seguridad
-
-⚠️ **Importante:** Esta configuración es solo para desarrollo/ambiente interno.
-- HTTP está habilitado para facilitar desarrollo
-- Para producción, usar HTTPS con certificados válidos
-- Restringir acceso a la red interna
-
-## 📞 Soporte
-
-Para reportar problemas:
-1. Verificar logs de nginx y odoo
-2. Probar con ambas IPs
-3. Limpiar caché del navegador
-4. Reiniciar containers si es necesario
 
 ---
 
-**Última actualización:** 2025-10-28
-**Versión:** 1.0.0
+**Ultima actualizacion:** 2026-02-17
+**Version app:** 1.1.0

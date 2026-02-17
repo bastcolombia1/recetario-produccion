@@ -3,6 +3,10 @@
  */
 
 const UI = {
+  // Tracking de fases que ya sonaron alerta (evita beep repetitivo)
+  _beepedPhases: new Set(),
+  _audioCtx: null,
+
   /**
    * Muestra una pantalla y oculta las demás
    */
@@ -124,7 +128,6 @@ const UI = {
     }
 
     this.updateElapsedTime(production);
-    this.updateProgress(production);
     this.renderPhases(production.phases);
 
     // Actualizar botones según estado
@@ -134,22 +137,48 @@ const UI = {
   },
 
   /**
-   * Actualiza el tiempo transcurrido
+   * Actualiza el tiempo transcurrido y la barra de progreso proporcional
    */
   updateElapsedTime(production) {
+    const elapsedTimeEl = document.getElementById('elapsed-time');
+
     if (production.current_phase && production.current_phase.start_time) {
       const startTime = new Date(production.current_phase.start_time);
       const now = new Date();
       const elapsedMs = now - startTime;
       const elapsedMinutes = Math.floor(elapsedMs / 60000);
 
-      document.getElementById('elapsed-time').textContent = `${elapsedMinutes} min`;
+      elapsedTimeEl.textContent = `${elapsedMinutes} min`;
 
-      // Calcular progreso
-      const estimatedMinutes = production.current_phase.estimated_minutes || 1;
-      const progress = Math.min((elapsedMinutes / estimatedMinutes) * 100, 100);
+      const estimatedMinutes = production.current_phase.estimated_minutes || 0;
 
-      this.updateProgressBar(progress);
+      if (estimatedMinutes > 0) {
+        const rawProgress = (elapsedMinutes / estimatedMinutes) * 100;
+        const barProgress = Math.min(rawProgress, 100);
+        const isOverdue = elapsedMinutes > estimatedMinutes;
+
+        this.updateProgressBar(barProgress, isOverdue);
+
+        if (isOverdue) {
+          elapsedTimeEl.classList.add('overdue');
+          // Beep una sola vez por fase vencida
+          const phaseKey = `${production.id}_${production.current_phase.name}`;
+          if (!this._beepedPhases.has(phaseKey)) {
+            this._beepedPhases.add(phaseKey);
+            this.playBeep();
+          }
+        } else {
+          elapsedTimeEl.classList.remove('overdue');
+        }
+      } else {
+        // Sin tiempo estimado - barra llena sin alerta
+        this.updateProgressBar(100, false);
+        elapsedTimeEl.classList.remove('overdue');
+      }
+    } else {
+      elapsedTimeEl.textContent = '0 min';
+      elapsedTimeEl.classList.remove('overdue');
+      this.updateProgressBar(0, false);
     }
   },
 
@@ -167,14 +196,76 @@ const UI = {
   },
 
   /**
-   * Actualiza la barra de progreso
+   * Actualiza la barra de progreso con estado overdue
    */
-  updateProgressBar(percentage) {
+  updateProgressBar(percentage, isOverdue = false) {
     const fill = document.getElementById('progress-fill');
     const text = document.getElementById('progress-percentage');
 
     fill.style.width = `${percentage}%`;
     text.textContent = `${Math.round(percentage)}%`;
+
+    if (isOverdue) {
+      fill.classList.add('overdue');
+      text.classList.add('overdue');
+    } else {
+      fill.classList.remove('overdue');
+      text.classList.remove('overdue');
+    }
+  },
+
+  /**
+   * Inicializa el AudioContext en respuesta a un gesto del usuario.
+   * Los navegadores bloquean audio que no se inicia desde click/tap.
+   */
+  initAudio() {
+    if (this._audioCtx) return;
+    try {
+      this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (this._audioCtx.state === 'suspended') {
+        this._audioCtx.resume();
+      }
+      console.log('Audio inicializado correctamente');
+    } catch (e) {
+      console.warn('No se pudo inicializar audio:', e);
+    }
+  },
+
+  /**
+   * Reproduce un sonido de alerta (beep triple)
+   */
+  playBeep() {
+    try {
+      if (!this._audioCtx) {
+        // Intento de emergencia - puede no funcionar sin gesto de usuario
+        this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      const ctx = this._audioCtx;
+
+      // Reanudar si está suspendido (por política del navegador)
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
+      const playTone = (startTime, duration) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        osc.type = 'square';
+        gain.gain.value = 0.3;
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+
+      const now = ctx.currentTime;
+      playTone(now, 0.15);
+      playTone(now + 0.25, 0.15);
+      playTone(now + 0.5, 0.15);
+    } catch (e) {
+      console.warn('No se pudo reproducir sonido de alerta:', e);
+    }
   },
 
   /**
@@ -297,28 +388,34 @@ const UI = {
       }
       card.dataset.index = index;
 
-      // Calcular tiempo transcurrido
-      let elapsed = 0;
-      let timeText = 'Sin iniciar';
-      if (production.start_time) {
-        const startTime = new Date(production.start_time);
-        if (!isNaN(startTime.getTime())) {
-          elapsed = Math.floor((Date.now() - startTime.getTime()) / 60000); // minutos
-          timeText = `${elapsed} min`;
-        }
-      }
-
       // Determinar fase actual
       const currentPhase = production.current_phase || { name: 'Iniciando...' };
       const phaseIcon = CONFIG.PHASE_ICONS[currentPhase.name] || '📋';
+
+      // Calcular tiempo transcurrido de la FASE ACTUAL (no de la producción completa)
+      let elapsed = 0;
+      let timeText = 'Sin iniciar';
+      const phaseStartTime = currentPhase.start_time || production.start_time;
+      if (phaseStartTime) {
+        const startTime = new Date(phaseStartTime);
+        if (!isNaN(startTime.getTime())) {
+          elapsed = Math.floor((Date.now() - startTime.getTime()) / 60000);
+          timeText = `${elapsed} min`;
+        }
+      }
 
       // Verificar si la fase está vencida (tiempo transcurrido > tiempo estimado)
       const estimatedMinutes = currentPhase.estimated_minutes || 0;
       const isOverdue = elapsed > estimatedMinutes && estimatedMinutes > 0;
 
-      // Agregar clase de alerta si está vencida
+      // Agregar clase de alerta si está vencida + beep
       if (isOverdue) {
         card.classList.add('overdue-alert');
+        const phaseKey = `${production.id}_${currentPhase.name}`;
+        if (!this._beepedPhases.has(phaseKey)) {
+          this._beepedPhases.add(phaseKey);
+          this.playBeep();
+        }
       }
 
       card.innerHTML = `
