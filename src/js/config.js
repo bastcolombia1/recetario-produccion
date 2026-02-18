@@ -9,8 +9,8 @@ const CONFIG = {
   APP_VERSION_CODE: 2,
 
   // URL para verificar actualizaciones (VPS público)
-  UPDATE_URL: 'http://209.126.125.39:8082/apk/version.json',
-  DOWNLOAD_PAGE_URL: 'http://209.126.125.39:8082/apk/',
+  UPDATE_URL: 'http://209.126.125.198:8082/apk/version.json',
+  DOWNLOAD_PAGE_URL: 'http://209.126.125.198:8082/apk/',
 
   // URL base para APK - WiFi (192.168.1.x)
   ODOO_URL: 'http://192.168.1.12',

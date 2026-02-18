@@ -8,7 +8,7 @@ La aplicacion funciona desde el navegador en cualquier dispositivo conectado a l
 
 **Servidor VPS (produccion):**
 ```
-http://209.126.125.39:8082/recetario/
+http://209.126.125.198:8082/recetario/
 ```
 
 **Red local (si aplica):**
@@ -25,13 +25,13 @@ http://IP_SERVIDOR/recetario/
 ### Descarga
 La APK se descarga desde:
 ```
-http://209.126.125.39:8082/apk/
+http://209.126.125.198:8082/apk/
 ```
 
 ### Configuracion del Servidor
 Al abrir la app por primera vez, configure la IP del servidor:
 1. En la pantalla de login, toque el icono de engranaje (esquina inferior derecha)
-2. Ingrese la IP del servidor (ej: `209.126.125.39`)
+2. Ingrese la IP del servidor (ej: `209.126.125.198`)
 3. Ingrese el puerto (ej: `8081` para Odoo directo, `80` si usa Nginx proxy)
 4. Toque **Probar Conexion** para verificar
 5. Toque **Guardar**

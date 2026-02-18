@@ -5,7 +5,7 @@
 
 const CONFIG = {
   // URL base para desarrollo - apunta al servidor VPS (Desarrollo)
-  ODOO_URL: 'http://209.126.125.39:8081',
+  ODOO_URL: 'http://209.126.125.198:8081',
 
   // Endpoints API
   API: {

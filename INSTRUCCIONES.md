@@ -39,7 +39,7 @@ La app incluye un modal de configuracion accesible desde el icono de engranaje e
 ### Opcion B: Editar config.js
 Editar `src/js/config.js` linea 16:
 ```javascript
-ODOO_URL: 'http://209.126.125.39:8081', // Cambiar por la IP real
+ODOO_URL: 'http://209.126.125.198:8081', // Cambiar por la IP real
 ```
 
 ### Opcion C: Copiar config de entorno
@@ -97,7 +97,7 @@ location /recetario/ {
 
 ## 7. Verificar la aplicacion
 
-1. Abrir: `http://209.126.125.39:8082/recetario/`
+1. Abrir: `http://209.126.125.198:8082/recetario/`
 2. Ingresar codigo: `12345`
 3. Debe cargar la pantalla de produccion con recetas disponibles
 
@@ -129,7 +129,7 @@ La app verifica actualizaciones contra un archivo JSON:
      "versionCode": 2,
      "releaseDate": "2026-02-17",
      "changelog": ["Alertas de fase vencida con sonido"],
-     "downloadUrl": "http://209.126.125.39:8082/apk/app-debug.apk"
+     "downloadUrl": "http://209.126.125.198:8082/apk/app-debug.apk"
    }
    ```
 2. Colocar la APK en `nginx/html/apk/app-debug.apk`

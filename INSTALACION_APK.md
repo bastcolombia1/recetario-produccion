@@ -5,7 +5,7 @@
 ### Desde el navegador
 La APK se puede descargar directamente desde:
 ```
-http://209.126.125.39:8082/apk/
+http://209.126.125.198:8082/apk/
 ```
 
 ### Desde el servidor (adb)
@@ -40,7 +40,7 @@ adb install -r app-debug.apk
 Al abrir la app por primera vez:
 
 1. Toque el icono de **engranaje** en la esquina inferior derecha de la pantalla de login
-2. Ingrese la **IP del servidor**: `209.126.125.39`
+2. Ingrese la **IP del servidor**: `209.126.125.198`
 3. Ingrese el **puerto**: `8081` (Odoo directo)
 4. Toque **Probar Conexion** para verificar que el servidor responde
 5. Si la conexion es exitosa, toque **Guardar**
@@ -49,20 +49,20 @@ Al abrir la app por primera vez:
 ### IPs segun entorno:
 | Entorno | IP | Puerto Odoo | Puerto Panel |
 |---------|-----|-------------|-------------|
-| VPS (produccion) | 209.126.125.39 | 8081 | 8082 |
+| VPS (produccion) | 209.126.125.198 | 8081 | 8082 |
 | Red local | (IP del servidor) | 8081 | 8082 |
 
 ## Acceso Web (sin instalar APK)
 
 La aplicacion tambien funciona desde el navegador:
 ```
-http://209.126.125.39:8082/recetario/
+http://209.126.125.198:8082/recetario/
 ```
 
 ## Actualizaciones
 
 La app verifica automaticamente si hay actualizaciones al iniciar:
-- Consulta `http://209.126.125.39:8082/apk/version.json`
+- Consulta `http://209.126.125.198:8082/apk/version.json`
 - Si hay nueva version, muestra barra de notificacion
 - Al tocar la barra, abre la pagina de descarga
 
@@ -86,7 +86,7 @@ La app verifica automaticamente si hay actualizaciones al iniciar:
      "versionCode": 3,
      "releaseDate": "2026-02-17",
      "changelog": ["Descripcion del cambio"],
-     "downloadUrl": "http://209.126.125.39:8082/apk/app-debug.apk"
+     "downloadUrl": "http://209.126.125.198:8082/apk/app-debug.apk"
    }
    ```
 

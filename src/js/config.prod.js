@@ -5,7 +5,7 @@
 
 const CONFIG = {
   // URL base para APK - apunta al servidor VPS (Producción)
-  ODOO_URL: 'http://209.126.125.39:8079',
+  ODOO_URL: 'http://209.126.125.198:8079',
 
   // Endpoints API
   API: {
