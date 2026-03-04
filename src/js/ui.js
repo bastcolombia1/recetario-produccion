@@ -108,27 +108,54 @@ const UI = {
 
     const nextPhaseBtn = document.getElementById('btn-next-phase');
 
-    if (production.current_phase) {
-      // Hay fase actual - mostrar normalmente
+    // Usar active_phases si está disponible (fases paralelas)
+    const activePhases = production.active_phases || [];
+    const hasActivePhases = activePhases.length > 0;
+
+    if (hasActivePhases) {
+      // Mostrar todas las fases activas
+      const phaseNames = activePhases.map(p => {
+        const icon = CONFIG.PHASE_ICONS[p.name] || '⚙️';
+        return `${icon} ${p.name}`;
+      });
+      document.getElementById('current-phase-name').textContent = phaseNames.join(' | ').toUpperCase();
+
+      // Tiempo estimado: la fase activa con más tiempo restante
+      const maxEstimated = Math.max(...activePhases.map(p => p.estimated_minutes || 0));
+      document.getElementById('estimated-time').textContent = `${maxEstimated} min`;
+
+      // Botón: iniciar siguiente fase pendiente
+      nextPhaseBtn.textContent = '▶️ INICIAR SIGUIENTE FASE';
+      nextPhaseBtn.className = 'btn btn-primary btn-large';
+    } else if (production.current_phase) {
+      // Backward compat: fase única
       const phaseIcon = CONFIG.PHASE_ICONS[production.current_phase.name] || '⚙️';
       document.getElementById('current-phase-name').textContent = `${phaseIcon} ${production.current_phase.name.toUpperCase()}`;
       document.getElementById('estimated-time').textContent = `${production.current_phase.estimated_minutes || 0} min`;
 
-      // Botón en modo normal
       nextPhaseBtn.textContent = '▶️ SIGUIENTE FASE';
       nextPhaseBtn.className = 'btn btn-primary btn-large';
     } else {
-      // No hay fase actual - todas las fases completadas
+      // Todas las fases completadas
       document.getElementById('current-phase-name').textContent = '✅ TODAS LAS FASES COMPLETADAS';
       document.getElementById('estimated-time').textContent = 'Listo para finalizar';
 
-      // Cambiar botón a "FINALIZAR PRODUCCIÓN"
       nextPhaseBtn.textContent = '✅ FINALIZAR PRODUCCIÓN';
       nextPhaseBtn.className = 'btn btn-success btn-large';
     }
 
+    // Ocultar botón "Siguiente Fase" si no hay fases pendientes y no todas están completadas
+    const hasPending = production.phases && production.phases.some(p => p.state === 'pending');
+    const allFinished = production.phases && production.phases.every(p => p.state === 'finished');
+    if (!hasPending && !allFinished) {
+      // Hay fases activas pero ninguna pendiente — ocultar botón avanzar
+      nextPhaseBtn.style.display = 'none';
+    } else {
+      nextPhaseBtn.style.display = '';
+    }
+
     this.updateElapsedTime(production);
-    this.renderPhases(production.phases);
+    this.renderPhases(production.phases, production.id);
 
     // Actualizar botones según estado
     const isPaused = production.state === 'paused';
@@ -142,15 +169,29 @@ const UI = {
   updateElapsedTime(production) {
     const elapsedTimeEl = document.getElementById('elapsed-time');
 
-    if (production.current_phase && production.current_phase.start_time) {
-      const startTime = new Date(production.current_phase.start_time);
+    // Usar active_phases si disponible (fases paralelas)
+    const activePhases = production.active_phases || [];
+    let activePhase = null;
+
+    if (activePhases.length > 0) {
+      // Usar la primera fase activa (la más antigua por sequence)
+      activePhase = activePhases[0];
+    } else if (production.current_phase) {
+      activePhase = production.current_phase;
+    }
+
+    const startTime = activePhase
+      ? new Date(activePhase.start_datetime || activePhase.start_time)
+      : null;
+
+    if (activePhase && startTime && !isNaN(startTime.getTime())) {
       const now = new Date();
       const elapsedMs = now - startTime;
       const elapsedMinutes = Math.floor(elapsedMs / 60000);
 
       elapsedTimeEl.textContent = `${elapsedMinutes} min`;
 
-      const estimatedMinutes = production.current_phase.estimated_minutes || 0;
+      const estimatedMinutes = activePhase.estimated_minutes || 0;
 
       if (estimatedMinutes > 0) {
         const rawProgress = (elapsedMinutes / estimatedMinutes) * 100;
@@ -161,8 +202,7 @@ const UI = {
 
         if (isOverdue) {
           elapsedTimeEl.classList.add('overdue');
-          // Beep una sola vez por fase vencida
-          const phaseKey = `${production.id}_${production.current_phase.name}`;
+          const phaseKey = `${production.id}_${activePhase.name}`;
           if (!this._beepedPhases.has(phaseKey)) {
             this._beepedPhases.add(phaseKey);
             this.playBeep();
@@ -171,14 +211,20 @@ const UI = {
           elapsedTimeEl.classList.remove('overdue');
         }
       } else {
-        // Sin tiempo estimado - barra llena sin alerta
         this.updateProgressBar(100, false);
         elapsedTimeEl.classList.remove('overdue');
       }
     } else {
+      // Calcular progreso general basado en fases completadas
+      if (production.phases && production.phases.length > 0) {
+        const completedPhases = production.phases.filter(p => p.state === 'finished').length;
+        const progress = (completedPhases / production.phases.length) * 100;
+        this.updateProgressBar(progress, false);
+      } else {
+        this.updateProgressBar(0, false);
+      }
       elapsedTimeEl.textContent = '0 min';
       elapsedTimeEl.classList.remove('overdue');
-      this.updateProgressBar(0, false);
     }
   },
 
@@ -269,11 +315,13 @@ const UI = {
   },
 
   /**
-   * Renderiza la lista de fases
+   * Renderiza la lista de fases con botones de acción por fase
    */
-  renderPhases(phases) {
+  renderPhases(phases, productionId) {
     const phasesList = document.getElementById('phases-list');
     phasesList.innerHTML = '';
+
+    if (!phases) return;
 
     phases.forEach(phase => {
       const item = document.createElement('div');
@@ -284,11 +332,75 @@ const UI = {
 
       if (phase.state === 'finished') statusIcon = '✅';
       else if (phase.state === 'in_progress') statusIcon = '🔵';
+      else if (phase.state === 'paused') statusIcon = '⏸️';
+
+      // Botones de acción por fase
+      let actionBtns = '';
+      if (phase.state === 'in_progress' && phase.id) {
+        actionBtns = `
+          <button class="btn-phase-action btn-pause-phase" data-phase-id="${phase.id}">⏸</button>
+          <button class="btn-phase-action btn-finish-phase" data-phase-id="${phase.id}">✓</button>
+        `;
+      } else if (phase.state === 'paused' && phase.id) {
+        actionBtns = `
+          <button class="btn-phase-action btn-resume-phase" data-phase-id="${phase.id}">▶</button>
+          <button class="btn-phase-action btn-finish-phase" data-phase-id="${phase.id}">✓</button>
+        `;
+      }
+
+      // Tiempo transcurrido si está en progreso o pausada
+      let timeInfo = '';
+      if ((phase.state === 'in_progress' || phase.state === 'paused') && (phase.start_datetime || phase.start_time)) {
+        const start = new Date(phase.start_datetime || phase.start_time);
+        if (!isNaN(start.getTime())) {
+          const elapsed = Math.floor((Date.now() - start.getTime()) / 60000);
+          const estimated = phase.estimated_minutes || 0;
+          const isOverdue = estimated > 0 && elapsed > estimated;
+          const pauseLabel = phase.state === 'paused' ? ' ⏸' : '';
+          timeInfo = `<span class="phase-time ${isOverdue ? 'overdue' : ''}">${elapsed}/${estimated} min${pauseLabel}</span>`;
+        }
+      } else if (phase.state === 'finished' && phase.start_datetime && phase.end_datetime) {
+        const start = new Date(phase.start_datetime);
+        const end = new Date(phase.end_datetime);
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+          const duration = Math.floor((end - start) / 60000);
+          timeInfo = `<span class="phase-time">${duration} min</span>`;
+        }
+      }
 
       item.innerHTML = `
-        <span class="phase-icon">${statusIcon}</span>
-        <span>${icon} ${phase.name}</span>
+        <div class="phase-info">
+          <span class="phase-icon">${statusIcon}</span>
+          <span class="phase-name-text">${icon} ${phase.name}</span>
+          ${timeInfo}
+        </div>
+        <div class="phase-actions">${actionBtns}</div>
       `;
+
+      // Event listeners para botones de acción por fase
+      if (phase.id && (phase.state === 'in_progress' || phase.state === 'paused')) {
+        const finishBtn = item.querySelector('.btn-finish-phase');
+        if (finishBtn) {
+          finishBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (window.App) window.App.handleFinishPhase(parseInt(finishBtn.dataset.phaseId));
+          });
+        }
+        const pauseBtn = item.querySelector('.btn-pause-phase');
+        if (pauseBtn) {
+          pauseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (window.App) window.App.handlePausePhase(parseInt(pauseBtn.dataset.phaseId));
+          });
+        }
+        const resumeBtn = item.querySelector('.btn-resume-phase');
+        if (resumeBtn) {
+          resumeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (window.App) window.App.handleResumePhase(parseInt(resumeBtn.dataset.phaseId));
+          });
+        }
+      }
 
       phasesList.appendChild(item);
     });
@@ -388,14 +500,17 @@ const UI = {
       }
       card.dataset.index = index;
 
-      // Determinar fase actual
-      const currentPhase = production.current_phase || { name: 'Iniciando...' };
-      const phaseIcon = CONFIG.PHASE_ICONS[currentPhase.name] || '📋';
+      // Determinar fases activas (paralelo) o fase actual (compat)
+      const activePhases = production.active_phases || [];
+      const currentPhase = activePhases.length > 0 ? activePhases[0] : (production.current_phase || { name: 'Iniciando...' });
+      const phaseDisplay = activePhases.length > 1
+        ? activePhases.map(p => (CONFIG.PHASE_ICONS[p.name] || '⚙️') + ' ' + p.name).join(' | ')
+        : (CONFIG.PHASE_ICONS[currentPhase.name] || '📋') + ' ' + currentPhase.name;
 
-      // Calcular tiempo transcurrido de la FASE ACTUAL (no de la producción completa)
+      // Calcular tiempo transcurrido de la primera fase activa
       let elapsed = 0;
       let timeText = 'Sin iniciar';
-      const phaseStartTime = currentPhase.start_time || production.start_time;
+      const phaseStartTime = currentPhase.start_datetime || currentPhase.start_time || production.start_time;
       if (phaseStartTime) {
         const startTime = new Date(phaseStartTime);
         if (!isNaN(startTime.getTime())) {
@@ -404,9 +519,19 @@ const UI = {
         }
       }
 
-      // Verificar si la fase está vencida (tiempo transcurrido > tiempo estimado)
+      // Verificar si alguna fase activa está vencida
       const estimatedMinutes = currentPhase.estimated_minutes || 0;
-      const isOverdue = elapsed > estimatedMinutes && estimatedMinutes > 0;
+      let isOverdue = elapsed > estimatedMinutes && estimatedMinutes > 0;
+      // Verificar todas las fases activas
+      for (const ap of activePhases) {
+        if (ap.estimated_minutes > 0 && (ap.start_datetime || ap.start_time)) {
+          const apStart = new Date(ap.start_datetime || ap.start_time);
+          if (!isNaN(apStart.getTime())) {
+            const apElapsed = Math.floor((Date.now() - apStart.getTime()) / 60000);
+            if (apElapsed > ap.estimated_minutes) isOverdue = true;
+          }
+        }
+      }
 
       // Agregar clase de alerta si está vencida + beep
       if (isOverdue) {
@@ -423,7 +548,7 @@ const UI = {
           <div class="production-card-title">${production.recipe_name || 'Producción'}</div>
           <div class="production-card-code">${production.code || 'N/A'}</div>
         </div>
-        <div class="production-card-phase">${phaseIcon} ${currentPhase.name}</div>
+        <div class="production-card-phase">${phaseDisplay}</div>
         <div class="production-card-time">⏱️ Tiempo: ${timeText}${isOverdue ? ' ⚠️' : ''}</div>
         ${isOverdue ? '<button class="btn-advance-phase-card" data-index="' + index + '">▶️ Avanzar Fase</button>' : ''}
       `;

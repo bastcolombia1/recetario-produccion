@@ -141,6 +141,36 @@ const API = {
   },
 
   /**
+   * Finaliza una fase específica
+   */
+  async finishPhase(productionId, phaseId) {
+    return await this.request(CONFIG.API.FINISH_PHASE, 'POST', {
+      production_id: productionId,
+      phase_id: phaseId,
+    });
+  },
+
+  /**
+   * Pausa una fase específica
+   */
+  async pausePhase(productionId, phaseId) {
+    return await this.request(CONFIG.API.PAUSE_PHASE, 'POST', {
+      production_id: productionId,
+      phase_id: phaseId,
+    });
+  },
+
+  /**
+   * Reanuda una fase específica
+   */
+  async resumePhase(productionId, phaseId) {
+    return await this.request(CONFIG.API.RESUME_PHASE, 'POST', {
+      production_id: productionId,
+      phase_id: phaseId,
+    });
+  },
+
+  /**
    * Pausa una producción
    */
   async pauseProduction(productionId) {

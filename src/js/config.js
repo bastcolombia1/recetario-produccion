@@ -5,8 +5,8 @@
 
 const CONFIG = {
   // Versión actual de la app
-  APP_VERSION: '1.1.0',
-  APP_VERSION_CODE: 2,
+  APP_VERSION: '1.5.0',
+  APP_VERSION_CODE: 6,
 
   // URL para verificar actualizaciones (VPS público)
   UPDATE_URL: 'http://209.126.125.198:8082/apk/version.json',
@@ -28,6 +28,9 @@ const CONFIG = {
     FINALIZE: '/api/production/finalize',
     PRODUCERS: '/api/production/producers',
     HISTORY: '/api/production/history',
+    FINISH_PHASE: '/api/production/finish_phase',
+    PAUSE_PHASE: '/api/production/pause_phase',
+    RESUME_PHASE: '/api/production/resume_phase',
   },
 
   // Intervalo de actualización de tiempos (milisegundos)

@@ -409,18 +409,26 @@ const App = {
   },
 
   /**
-   * Maneja el avance a la siguiente fase
+   * Maneja el avance a la siguiente fase (inicia siguiente sin finalizar actual)
    */
   async handleNextPhase() {
-    // Si no hay fase actual, significa que ya se completaron todas
-    // y solo necesitamos ir a la pantalla de finalización
-    if (!State.currentProduction.current_phase) {
+    // Si todas las fases completadas → ir a finalización
+    const allFinished = State.currentProduction.phases &&
+      State.currentProduction.phases.every(p => p.state === 'finished');
+    if (allFinished) {
       State.stopUpdateTimer();
       UI.showFinalizeScreen(State.currentProduction);
       return;
     }
 
-    if (!confirm('¿Avanzar a la siguiente fase?')) {
+    if (!State.currentProduction.current_phase &&
+        (!State.currentProduction.active_phases || State.currentProduction.active_phases.length === 0)) {
+      State.stopUpdateTimer();
+      UI.showFinalizeScreen(State.currentProduction);
+      return;
+    }
+
+    if (!confirm('¿Iniciar la siguiente fase?')) {
       return;
     }
 
@@ -428,30 +436,88 @@ const App = {
       const result = await API.advancePhase(State.currentProduction.id);
 
       if (result.finished) {
-        // Todas las fases completadas, mostrar pantalla de finalización
         State.stopUpdateTimer();
         UI.showFinalizeScreen(State.currentProduction);
       } else {
-        // Actualizar estado con nueva fase
         State.updateProduction({
           current_phase: result.current_phase,
+          active_phases: result.active_phases || [],
           phases: result.phases,
         });
         UI.updateProductionScreen(State.currentProduction);
       }
     } catch (error) {
-      // Si el error es "No hay fase actual", significa que ya terminaron todas las fases
-      // Actualizar el estado local y mostrar pantalla de finalización
-      if (error.message && error.message.includes('No hay fase actual')) {
-        console.log('Todas las fases completadas, actualizando estado local');
-        State.updateProduction({
-          current_phase: null,
-        });
+      if (error.message && (error.message.includes('No hay fase actual') || error.message.includes('No hay fases pendientes'))) {
+        State.updateProduction({ current_phase: null, active_phases: [] });
         State.stopUpdateTimer();
         UI.showFinalizeScreen(State.currentProduction);
       } else {
         alert(error.message || 'Error al avanzar fase');
       }
+    }
+  },
+
+  /**
+   * Finaliza una fase específica por ID (fases paralelas)
+   */
+  async handleFinishPhase(phaseId) {
+    if (!confirm('¿Finalizar esta fase?')) {
+      return;
+    }
+
+    try {
+      const result = await API.finishPhase(State.currentProduction.id, phaseId);
+
+      State.updateProduction({
+        current_phase: result.current_phase,
+        active_phases: result.active_phases || [],
+        phases: result.phases,
+      });
+
+      if (result.finished) {
+        // Todas las fases completadas
+        UI.updateProductionScreen(State.currentProduction);
+      } else {
+        UI.updateProductionScreen(State.currentProduction);
+      }
+    } catch (error) {
+      alert(error.message || 'Error al finalizar fase');
+    }
+  },
+
+  /**
+   * Pausa una fase específica por ID
+   */
+  async handlePausePhase(phaseId) {
+    try {
+      const result = await API.pausePhase(State.currentProduction.id, phaseId);
+
+      State.updateProduction({
+        current_phase: result.current_phase,
+        active_phases: result.active_phases || [],
+        phases: result.phases,
+      });
+      UI.updateProductionScreen(State.currentProduction);
+    } catch (error) {
+      alert(error.message || 'Error al pausar fase');
+    }
+  },
+
+  /**
+   * Reanuda una fase específica por ID
+   */
+  async handleResumePhase(phaseId) {
+    try {
+      const result = await API.resumePhase(State.currentProduction.id, phaseId);
+
+      State.updateProduction({
+        current_phase: result.current_phase,
+        active_phases: result.active_phases || [],
+        phases: result.phases,
+      });
+      UI.updateProductionScreen(State.currentProduction);
+    } catch (error) {
+      alert(error.message || 'Error al reanudar fase');
     }
   },
 

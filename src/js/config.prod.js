@@ -20,6 +20,9 @@ const CONFIG = {
     FINALIZE: '/api/production/finalize',
     PRODUCERS: '/api/production/producers',
     HISTORY: '/api/production/history',
+    FINISH_PHASE: '/api/production/finish_phase',
+    PAUSE_PHASE: '/api/production/pause_phase',
+    RESUME_PHASE: '/api/production/resume_phase',
   },
 
   // Intervalo de actualización de tiempos (milisegundos)
